@@ -179,7 +179,7 @@ CREATE TABLE public.artworks (
 --command " "\\copy public.artworks (artwork_id, title, artist_id, date, medium, dimensions, acquisition_date, credit, catalogue, department, classification, object_number, diameter_cm, circumference_cm, height_cm, length_cm, width_cm, depth_cm, weight_kg, durations) FROM 'moma_public_artworks.txt' DELIMITER '|' CSV HEADER QUOTE '\"' ESCAPE '''';""
 ```
 
-### 6. Add NLP Application to the MoMA Database
+### 6. Add NLQ Application to the MoMA Database
 
 Create the read-only NQL Application database user account. Update the username and password you configured in step 2, with the secrets.
 
