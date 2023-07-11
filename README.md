@@ -59,8 +59,7 @@ aws cloudformation create-stack \
   --stack-name NlqMainStack \
   --template-body file://NlqMainStack.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
-  --parameters \
-  		ParameterKey="MyIpAddress",ParameterValue=$(curl -s http://checkip.amazonaws.com/)/32
+  --parameters ParameterKey="MyIpAddress",ParameterValue=$(curl -s http://checkip.amazonaws.com/)/32
 ```
 
 ## 4. Build and Push the Docker Image to ECR
