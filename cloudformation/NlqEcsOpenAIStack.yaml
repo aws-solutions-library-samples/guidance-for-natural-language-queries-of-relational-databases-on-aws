@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "ECS resources for NLQ AWS Solution using OpenAI's LLM models via their API."
+Parameters:
+  ProjectTagValue:
+    Type: String
+    Default: "AWS Solution: NLQ Application"
+    Description: The Project Tag value applied to all resources.
+
+Resources:
+  ECSTaskDefinition:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      ContainerDefinitions:
+        - Environment:
+            - Name: "REGION_NAME"
+              Value: !Ref AWS::Region
+            - Name: "OPENAI_API_KEY"
+              Value: "{{resolve:secretsmanager:/nlq/OpenAIAPIKey}}"
+          Essential: true
+          Image: "{{resolve:ssm:/nlq/ECRRepositoryUri}}:1.0.0-oai"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-create-group: "true"
+              awslogs-group: "{{resolve:ssm:/nlq/ECSLogGroupName}}"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: "ecs"
+          Name: "nlq-genai"
+          PortMappings:
+            - ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+              HostPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+              Protocol: "tcp"
+      Family: "nlq-genai"
+      TaskRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
+      ExecutionRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
+      NetworkMode: "awsvpc"
+      RequiresCompatibilities:
+        - "FARGATE"
+      Cpu: "1024"
+      Memory: "3072"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ECSService:
+    Type: "AWS::ECS::Service"
+    Properties:
+      ServiceName: "nlq-genai"
+      Cluster: "{{resolve:ssm:/nlq/ECSClusterArn}}"
+      LoadBalancers:
+        - TargetGroupArn: "{{resolve:ssm:/nlq/TargetGroupTargetGroupArn}}"
+          ContainerName: "nlq-genai"
+          ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+      DesiredCount: 1
+      LaunchType: "FARGATE"
+      PlatformVersion: "LATEST"
+      TaskDefinition: !Ref ECSTaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: "ENABLED"
+          SecurityGroups:
+            - "{{resolve:ssm:/nlq/ECSSecurityGroupGroupId}}"
+            - "{{resolve:ssm:/nlq/VPCDefaultSecurityGroup}}"
+          Subnets:
+            - "{{resolve:ssm:/nlq/PublicSubnet1SubnetId}}"
+            - "{{resolve:ssm:/nlq/PublicSubnet2SubnetId}}"
+      HealthCheckGracePeriodSeconds: 60
+      SchedulingStrategy: "REPLICA"
+      DeploymentController:
+        Type: "ECS"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue

@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Machine Learning resources for NLQ AWS Solution. The choice of model and inference instance type will have a major impact on the accuracy of the NLQ results."
+Parameters:
+  InferenceEndpointName:
+    Type: String
+    Default: "hf-text2text-flan-t5-xxl-fp16"
+    Description: Name of the SageMaker Inference Endpoint.
+
+  SageMakerInferenceInstanceType:
+    Type: String
+    Default: "ml.g5.24xlarge"
+    Description: The EC2 instance type that will serve the model endpoint.
+
+  ProjectTagValue:
+    Type: String
+    Default: "AWS Solution: NLQ Application"
+    Description: The Project Tag value applied to all resources.
+
+Resources:
+  AmazonSageMakerExecutionRoleNLQGenAI:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/service-role/"
+      AssumeRolePolicyDocument: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"sagemaker.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+      Description: "SageMaker execution role."
+
+  SageMakerEndpoint:
+    Type: "AWS::SageMaker::Endpoint"
+    Properties:
+      EndpointName: !Ref InferenceEndpointName
+      EndpointConfigName: !GetAtt SageMakerEndpointConfig.EndpointConfigName
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  SageMakerModel:
+    Type: "AWS::SageMaker::Model"
+    Properties:
+      ModelName: !Ref InferenceEndpointName
+      PrimaryContainer:
+        Environment:
+          MODEL_CACHE_ROOT: "/opt/ml/model"
+          SAGEMAKER_ENV: "1"
+          SAGEMAKER_MODEL_SERVER_TIMEOUT: "3600"
+          SAGEMAKER_MODEL_SERVER_WORKERS: "1"
+          SAGEMAKER_PROGRAM: "inference.py"
+          SAGEMAKER_SUBMIT_DIRECTORY: "/opt/ml/model/code/"
+          TS_DEFAULT_WORKERS_PER_MODEL: "1"
+        ModelDataUrl: !Sub "s3://jumpstart-cache-prod-${AWS::Region}/huggingface-infer/prepack/v1.1.2/infer-prepack-huggingface-text2text-flan-t5-xxl-fp16.tar.gz"
+        Image: !Sub "763104351884.dkr.ecr.${AWS::Region}.amazonaws.com/huggingface-pytorch-inference:2.0.0-transformers4.28.1-gpu-py310-cu118-ubuntu20.04"
+      ExecutionRoleArn: !GetAtt AmazonSageMakerExecutionRoleNLQGenAI.Arn
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  SageMakerEndpointConfig:
+    Type: "AWS::SageMaker::EndpointConfig"
+    Properties:
+      EndpointConfigName: !Ref InferenceEndpointName
+      ProductionVariants:
+        - VariantName: "AllTraffic"
+          ModelName: !GetAtt SageMakerModel.ModelName
+          InitialInstanceCount: 1
+          InstanceType: !Ref SageMakerInferenceInstanceType
+          InitialVariantWeight: 1
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  InferenceEndpointNameSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. Name of the SageMaker Inference Endpoint.
+      Name: "/nlq/InferenceEndpointName"
+      Type: String
+      Value: !Ref InferenceEndpointName
+
+Outputs:
+  InferenceEndpointName:
+    Description: Name of the SageMaker Inference Endpoint.
+    Value: !Ref InferenceEndpointName

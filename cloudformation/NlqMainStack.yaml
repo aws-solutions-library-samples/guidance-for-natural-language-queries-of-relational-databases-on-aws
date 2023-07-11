@@ -1,0 +1,538 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Networking, security, Amazon ECR repository, and Amazon RDS resources for NLQ AWS Solution."
+Parameters:
+  VpcCIDR:
+    Description: The IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 172.30.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: The IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 172.30.1.0/24
+
+  PublicSubnet2CIDR:
+    Description: The IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 172.30.2.0/24
+
+  MyIpAddress:
+    Type: String
+    Description: Your IP address in the form x.x.x.x/32
+
+  NLQAppDatabaseName:
+    Type: String
+    Default: "moma"
+    Description: NLQ application database.
+
+  RDSPort:
+    Type: Number
+    Default: 5432
+    Description: The port RDS is listening on.
+
+  ALBPort:
+    Type: Number
+    Default: 80
+    Description: The port the ALB is listening on.
+
+  NLQAppPort:
+    Type: Number
+    Default: 8501
+    Description: The port the NLQ application is listening on.
+
+  ECSLogGroupName:
+    Type: String
+    Default: "/ecs/NLQ"
+    Description: The NLQ application ECS log group name.
+
+  ProjectTagValue:
+    Type: String
+    Default: "AWS Solution: NLQ Application"
+    Description: The Project Tag value applied to all resources.
+
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      CidrBlock: !Ref PublicSubnet1CIDR
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  PublicSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Sub "${AWS::Region}b"
+      CidrBlock: !Ref PublicSubnet2CIDR
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  DefaultPublicRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+
+  InternetGatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  RDSDBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "Amazon RDS Subnet Group"
+      DBSubnetGroupName: !Sub "default-${PublicSubnet1.VpcId}"
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+
+  RDSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Security Group for RDS instance"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - Description: Access to RDS from MyIP
+          CidrIp: !Ref MyIpAddress
+          FromPort: !Ref RDSPort
+          IpProtocol: "tcp"
+          ToPort: !Ref RDSPort
+        - Description: Access to RDS from ECS Service
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+          SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+          FromPort: !Ref RDSPort
+          IpProtocol: "tcp"
+          ToPort: !Ref RDSPort
+      SecurityGroupEgress:
+        - Description: Egress access to internet
+          CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Security Group for Application Load Balancer (ALB)"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - Description: Access to ALB from MyIP
+          CidrIp: !Ref MyIpAddress
+          FromPort: !Ref ALBPort
+          IpProtocol: "tcp"
+          ToPort: !Ref ALBPort
+      SecurityGroupEgress:
+        - Description: Egress access to internet
+          CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ECSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Security Group for Application ECS Service"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - Description: Access to ECS Service from MyIP
+          CidrIp: !Ref MyIpAddress
+          FromPort: !Ref NLQAppPort
+          IpProtocol: "tcp"
+          ToPort: !Ref NLQAppPort
+        - Description: Access to ECS Service from ALB
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+          FromPort: !Ref NLQAppPort
+          IpProtocol: "tcp"
+          ToPort: !Ref NLQAppPort
+      SecurityGroupEgress:
+        - Description: Egress access to internet
+          CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  RDSDBInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: "200"
+      DBInstanceClass: "db.m5d.large"
+      Engine: "postgres"
+      MasterUsername: "{{resolve:secretsmanager:/nlq/MasterUsername}}"
+      ManageMasterUserPassword: true
+      # MasterUserPassword: "{{resolve:secretsmanager:/nlq/MasterUserPassword}}"
+      DBName: !Ref NLQAppDatabaseName
+      PreferredBackupWindow: "03:05-03:35"
+      BackupRetentionPeriod: 7
+      PreferredMaintenanceWindow: "fri:04:30-fri:05:00"
+      MultiAZ: true
+      EngineVersion: "15.3"
+      AutoMinorVersionUpgrade: true
+      LicenseModel: "postgresql-license"
+      PubliclyAccessible: false
+      StorageType: "gp3"
+      Port: !Ref RDSPort
+      StorageEncrypted: true
+      CopyTagsToSnapshot: true
+      MonitoringInterval: 60
+      EnableIAMDatabaseAuthentication: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      DeletionProtection: true
+      DBSubnetGroupName: !Sub "default-${PublicSubnet1.VpcId}"
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      MaxAllocatedStorage: 1000
+      DBParameterGroupName: "default.postgres15"
+      OptionGroupName: "default:postgres-15"
+      MonitoringRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role"
+      CACertificateIdentifier: "rds-ca-2019"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  SecretsManagerSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Name: "/nlq/RDS_URI"
+      Description: "NLQ application RDS URI information."
+      SecretString: !Sub '{"RDSDBInstanceEndpointAddress":"${RDSDBInstance.Endpoint.Address}","RDSDBInstanceEndpointPort":${RDSDBInstance.Endpoint.Port},"NLQAppDatabaseName":"${NLQAppDatabaseName}"}'
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ElasticLoadBalancingV2LoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Scheme: "internet-facing"
+      Type: "application"
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !GetAtt ALBSecurityGroup.GroupId
+      IpAddressType: "ipv4"
+      LoadBalancerAttributes:
+        - Key: "idle_timeout.timeout_seconds"
+          Value: "60"
+        - Key: "deletion_protection.enabled"
+          Value: "false"
+        - Key: "routing.http2.enabled"
+          Value: "true"
+        - Key: "routing.http.drop_invalid_header_fields.enabled"
+          Value: "true"
+        - Key: "routing.http.xff_client_port.enabled"
+          Value: "false"
+        - Key: "routing.http.preserve_host_header.enabled"
+          Value: "false"
+        - Key: "routing.http.xff_header_processing.mode"
+          Value: "append"
+        - Key: "load_balancing.cross_zone.enabled"
+          Value: "true"
+        - Key: "routing.http.desync_mitigation_mode"
+          Value: "defensive"
+        - Key: "waf.fail_open.enabled"
+          Value: "false"
+        - Key: "routing.http.x_amzn_tls_version_and_cipher_suite.enabled"
+          Value: "false"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+    DependsOn: InternetGateway
+
+  ElasticLoadBalancingV2TargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: "/healthz"
+      Port: !Ref ALBPort
+      Protocol: "HTTP"
+      ProtocolVersion: "HTTP1"
+      HealthCheckPort: "traffic-port"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      TargetType: "ip"
+      Matcher:
+        HttpCode: "200"
+      HealthyThresholdCount: 5
+      VpcId: !Ref VPC
+      HealthCheckEnabled: true
+      TargetGroupAttributes:
+        - Key: "target_group_health.unhealthy_state_routing.minimum_healthy_targets.count"
+          Value: "1"
+        - Key: "stickiness.enabled"
+          Value: "false"
+        - Key: "target_group_health.unhealthy_state_routing.minimum_healthy_targets.percentage"
+          Value: "off"
+        - Key: "deregistration_delay.timeout_seconds"
+          Value: "300"
+        - Key: "target_group_health.dns_failover.minimum_healthy_targets.count"
+          Value: "1"
+        - Key: "stickiness.app_cookie.cookie_name"
+          Value: ""
+        - Key: "stickiness.type"
+          Value: "lb_cookie"
+        - Key: "stickiness.lb_cookie.duration_seconds"
+          Value: "86400"
+        - Key: "slow_start.duration_seconds"
+          Value: "0"
+        - Key: "stickiness.app_cookie.duration_seconds"
+          Value: "86400"
+        - Key: "target_group_health.dns_failover.minimum_healthy_targets.percentage"
+          Value: "off"
+        - Key: "load_balancing.cross_zone.enabled"
+          Value: "use_load_balancer_configuration"
+        - Key: "load_balancing.algorithm.type"
+          Value: "round_robin"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ElasticLoadBalancingV2Listener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref ElasticLoadBalancingV2LoadBalancer
+      Port: !Ref ALBPort
+      Protocol: "HTTP"
+      DefaultActions:
+        - TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+          Type: "forward"
+
+  ECRRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: "nlq-genai"
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: "KMS"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref ECSLogGroupName
+      RetentionInDays: 7
+
+  ECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      CapacityProviders:
+        - "FARGATE"
+        - "FARGATE_SPOT"
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: "FARGATE"
+          Weight: 1
+          Base: 0
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  SecretManagerIAMManagedPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      Path: "/"
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "VisualEditor0",
+              "Effect": "Allow",
+              "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+              ],
+              "Resource": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/nlq/*"
+            },
+            {
+              "Sid": "VisualEditor1",
+              "Effect": "Allow",
+              "Action": "secretsmanager:ListSecrets",
+              "Resource": "*"
+            }
+          ]
+        }
+
+  SageMakerInvokeEndpointIAMManagedPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      Path: "/"
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "sagemaker:InvokeEndpoint",
+              "Resource": "arn:aws:sagemaker:*:${AWS::AccountId}:endpoint/*"
+            }
+          ]
+        }
+
+  EcsTaskExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument: '{"Version":"2008-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"ecs-tasks.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - !Ref SageMakerInvokeEndpointIAMManagedPolicy
+        - !Ref SecretManagerIAMManagedPolicy
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  ECRRepositoryUriSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The URI for the ECR repository.
+      Name: "/nlq/ECRRepositoryUri"
+      Type: String
+      Value: !GetAtt ECRRepository.RepositoryUri
+
+  VPCDefaultSecurityGroupSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The VPC DefaultSecurityGroup.
+      Name: "/nlq/VPCDefaultSecurityGroup"
+      Type: String
+      Value: !GetAtt VPC.DefaultSecurityGroup
+
+  TargetGroupTargetGroupArnSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The ElasticLoadBalancingV 2TargetGroupTargetGroup Arn.
+      Name: "/nlq/TargetGroupTargetGroupArn"
+      Type: String
+      Value: !Ref ElasticLoadBalancingV2TargetGroup
+
+  ECSSecurityGroupGroupIdSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The ECS SecurityGroup GroupId.
+      Name: "/nlq/ECSSecurityGroupGroupId"
+      Type: String
+      Value: !GetAtt ECSSecurityGroup.GroupId
+
+  PublicSubnet1SubnetIdSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The PublicSubnet1 SubnetId.
+      Name: "/nlq/PublicSubnet1SubnetId"
+      Type: String
+      Value: !GetAtt PublicSubnet1.SubnetId
+
+  PublicSubnet2SubnetIdSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The PublicSubnet2 SubnetId.
+      Name: "/nlq/PublicSubnet2SubnetId"
+      Type: String
+      Value: !GetAtt PublicSubnet2.SubnetId
+
+  ECSClusterArnSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The ECS cluster ARN.
+      Name: "/nlq/ECSClusterArn"
+      Type: String
+      Value: !GetAtt ECSCluster.Arn
+
+  NLQAppPortSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The NLQ application port.
+      Name: "/nlq/NLQAppPort"
+      Type: String
+      Value: !Ref NLQAppPort
+
+  EcsTaskExecutionRoleArnSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The ECS TaskExecutionRole Arn.
+      Name: "/nlq/EcsTaskExecutionRoleArn"
+      Type: String
+      Value: !GetAtt EcsTaskExecutionRole.Arn
+
+  ECSLogGroupNameSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The NLQ application ECS log group name.
+      Name: "/nlq/ECSLogGroupName"
+      Type: String
+      Value: !Ref ECSLogGroupName
+
+  LoadBalancerDNSNameSSMParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: DO NOT UPDATE. Updated from CFN. The ALB DNS name.
+      Name: "/nlq/LoadBalancerDNSName"
+      Type: String
+      Value: !GetAtt ElasticLoadBalancingV2LoadBalancer.DNSName
+
+Outputs:
+  ECRRepositoryUri:
+    Description: The URI for the ECR repository.
+    Value: !GetAtt ECRRepository.RepositoryUri
+
+  RDSDBInstanceEndpointAddress:
+    Description: The RDS endpoint address.
+    Value: !GetAtt RDSDBInstance.Endpoint.Address
+
+  LoadBalancerDNSName:
+    Description: The ALB DNS name.
+    Value: !GetAtt ElasticLoadBalancingV2LoadBalancer.DNSName
