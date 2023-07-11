@@ -1,11 +1,13 @@
-# Generative AI-enabled Natural Language Relational Database Queries
+## Generative AI-enabled Natural Language Relational Database Queries
 
 This AWS Solution contain a demonstration Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's large language models via their API. The demonstration's web-based application uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), and [Chroma](https://www.trychroma.com/) to perform NQL based on end-user input.
 
-## NLQ Application Web-based UI
+### NLQ Application Web-based UI
+
 ![NLQ Application Preview 1](./pics/nlqapp_preview_1.png)
 
-## NLQ Application Verbose Output
+### NLQ Application Verbose Output
+
 ![NLQ Application Preview 2](./pics/nlqapp_preview_2.png)
 
 ## Foundation Model Choice and Accuracy of NQL
@@ -26,22 +28,22 @@ This solution uses an optimized copy of the open-source database, The Museum of 
 
 Using the MoMA dataset, we can ask natural language questions, like:
 
-* How many artists are represented in the collection?
-* How many pieces of artwork are there?
-* How many artists are there whose nationality is Italian?
-* How many artworks are by the artist Claude Monet?
-* How many artworks are classified as paintings?
-* How many artworks were created by Spanish artists?
-* How many artist names start with the letter 'M'?
-* Who is the most prolific artist in the collection? What is their nationality?
-* What nationality of artists created the most artworks in the collection?
-* What is the ratio of male to female artists. Return as a ratio.
-* What are the five oldest artworks in the collection? Return the title and date for each.
-* Return the artwork for Frida Kahlo in a numbered list, including title and date.
+- How many artists are represented in the collection?
+- How many pieces of artwork are there?
+- How many artists are there whose nationality is Italian?
+- How many artworks are by the artist Claude Monet?
+- How many artworks are classified as paintings?
+- How many artworks were created by Spanish artists?
+- How many artist names start with the letter 'M'?
+- Who is the most prolific artist in the collection? What is their nationality?
+- What nationality of artists created the most artworks in the collection?
+- What is the ratio of male to female artists. Return as a ratio.
+- What are the five oldest artworks in the collection? Return the title and date for each.
+- Return the artwork for Frida Kahlo in a numbered list, including title and date.
 
 Again, the ability of the NLQ Application to return an answer and return an accurate answer, is primarily dependent on the choice of foundation model. Not all models are capable of NLQ, not returning accurate answers.
 
-# Deployment Instructions
+## Deployment Instructions
 
 1. If using the Amazon SageMaker JumpStart Foundation Models option, make you have the required EC2 instance for the endpoint inference, or request it using Service Quotas in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model: https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B).
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
@@ -52,7 +54,7 @@ Again, the ability of the NLQ Application to return an answer and return an accu
 7. Deploy the `NlqSageMakerEndpointStack` CloudFormation template, using the Amazon SageMaker JumpStart Foundation Models option.
 8. Deploy the `NlqEcsSageMakerStack` CloudFormation template, or alternately the `NlqOpenAIStack` CloudFormation template for use with Option 2: OpenAI API.
 
-## 2. Create AWS Secret Manager Secrets
+### 2. Create AWS Secret Manager Secrets
 
 Make sure you update usernames and password.
 
@@ -79,7 +81,7 @@ aws secretsmanager create-secret \
     --secret-string "<your_openai_api_key"
 ```
 
-## 3. Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
+### 3. Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
 
 ```sh
 cd cloudformation/
@@ -91,7 +93,7 @@ aws cloudformation create-stack \
   --parameters ParameterKey="MyIpAddress",ParameterValue=$(curl -s http://checkip.amazonaws.com/)/32
 ```
 
-## 4. Build and Push the Docker Image to ECR
+### 4. Build and Push the Docker Image to ECR
 
 You can build the image locally, in a CI/CD pipeline, using SageMaker Notebook environment, or AWS Cloud9.
 
@@ -126,9 +128,10 @@ docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
 
-## 5. Import Sample Data and Configure the MoMA Database
+### 5. Import Sample Data and Configure the MoMA Database
 
 1. Connect to the `moma` database using you preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
+
 2. Create the two MoMA collection tables into the `moma` database.
 
 ```sql
@@ -176,7 +179,7 @@ CREATE TABLE public.artworks (
 --command " "\\copy public.artworks (artwork_id, title, artist_id, date, medium, dimensions, acquisition_date, credit, catalogue, department, classification, object_number, diameter_cm, circumference_cm, height_cm, length_cm, width_cm, depth_cm, weight_kg, durations) FROM 'moma_public_artworks.txt' DELIMITER '|' CSV HEADER QUOTE '\"' ESCAPE '''';""
 ```
 
-## 6. Add NLP Application to the MoMA Database
+### 6. Add NLP Application to the MoMA Database
 
 Create the read-only NQL Application database user account. Update the username and password you configured in step 2, with the secrets.
 
@@ -194,7 +197,7 @@ CREATE ROLE <your_nqlapp_username> WITH
 GRANT pg_read_all_data TO <your_nqlapp_username>;
 ```
 
-## 7. Deploy the ML Stack: Model, Endpoint
+### 7. Deploy the ML Stack: Model, Endpoint
 
 Option 1: SageMaker JumpStart FM Endpoint
 
@@ -207,7 +210,7 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-## 8. Deploy the ECS Service Stack: Task, Service
+### 8. Deploy the ECS Service Stack: Task, Service
 
 Option 1: SageMaker JumpStart FM Endpoint
 
