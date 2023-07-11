@@ -1,24 +1,47 @@
-## Generative AI-enabled Natural Language Relational Database Queries
+# Generative AI-enabled Natural Language Relational Database Queries
 
-Demonstration of Natural Language Query (NLQ) using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's models via their API. The demonstration's application uses [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), and [Chroma](https://www.trychroma.com/).
+This AWS Solution contain a demonstration Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's large language models via their API. The demonstration's web-based application uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), and [Chroma](https://www.trychroma.com/) to perform NQL based on end-user input.
 
-### NLQ Application Demonstration Preview
+## NLQ Application Web-based UI
 ![NLQ Application Preview 1](./pics/nlqapp_preview_1.png)
 
-### NLQ Application Verbose Output Preview
+## NLQ Application Verbose Output
 ![NLQ Application Preview 2](./pics/nlqapp_preview_2.png)
 
 ## Foundation Model Choice and Accuracy of NQL
 
 The selection of the Foundation Model (FM) for NLQ plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs possess this capability. Additionally, the accuracy of the NLQ process relies heavily on the chosen model, as well as other factors such as the prompt, prompt-template, and sample queries used for in-context learning (also known as few-shot prompting).
 
-OpenAI GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`. These models are considered state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions with minimal in-context learning. As an alternative to OpenAI, NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5` series of models are a popular choice, their capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model to experience lengthy timeouts when faced with even moderately complex questions.
+The NLQ Application was tested a large variety of FMs. As a baseline for gauging the FM effectiveness for NLQ, OpenAI's GPT-3 series `gpt-3.5-turbo` model was used. This model was capable of answering all sample questions included in the application's web-based UI. OpenAI GPT-3 and GPT-4 series models, like `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4` should be considered current state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions with minimal in-context learning.
 
-Transitioning from Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API is simple. This option eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. First, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push it to the ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will also need to create an OpenAI account and obtain your personal secret API key.
+As an alternative to OpenAI, NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5` series of models are a popular choice, their capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model to experience lengthy timeouts when faced with even moderately complex questions.
 
-You can also replace the `google/flan-t5-xxl-fp16` JumpStart Foundation Model hosted by the Amazon SageMaker endpoint and deployed using the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the parameters in the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you will have to make adjustments to the `app_sagemaker.py` file, modifying the `ContentHandler` Class to match the response payload of the chosen model. Rebuilding the Amazon ECR Docker Image using the `Dockerfile_SageMaker` Dockerfile and pushing it to the ECR repository will also be necessary. Lastly, you should update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker` CloudFormation stack.
+Transitioning from the solution's Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API is simple. This option eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. First, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push it to the ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will also need to create an OpenAI account and obtain your own personal secret API key.
 
-## Deployment Instructions
+You can also replace the default `google/flan-t5-xxl-fp16` JumpStart Foundation Model hosted by the Amazon SageMaker endpoint and deployed using the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the parameters in the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you may need to make adjustments to the `app_sagemaker.py` file, modifying the `ContentHandler` Class to match the response payload of the chosen model. Rebuilding the Amazon ECR Docker Image using the `Dockerfile_SageMaker` Dockerfile and pushing it to the ECR repository will also be necessary. Lastly, you should update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker` CloudFormation stack.
+
+## Sample Dataset
+
+This solution uses an optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection. The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported in the Amazon RDS for PostgreSQL database instance.
+
+Using the MoMA dataset, we can ask natural language questions, like:
+
+* How many artists are represented in the collection?
+* How many pieces of artwork are there?
+* How many artists are there whose nationality is Italian?
+* How many artworks are by the artist Claude Monet?
+* How many artworks are classified as paintings?
+* How many artworks were created by Spanish artists?
+* How many artist names start with the letter 'M'?
+* Who is the most prolific artist in the collection? What is their nationality?
+* What nationality of artists created the most artworks in the collection?
+* What is the ratio of male to female artists. Return as a ratio.
+* What are the five oldest artworks in the collection? Return the title and date for each.
+* Return the artwork for Frida Kahlo in a numbered list, including title and date.
+
+Again, the ability of the NLQ Application to return an answer and return an accurate answer, is primarily dependent on the choice of foundation model. Not all models are capable of NLQ, not returning accurate answers.
+
+# Deployment Instructions
 
 1. If using the Amazon SageMaker JumpStart Foundation Models option, make you have the required EC2 instance for the endpoint inference, or request it using Service Quotas in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model: https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B).
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
@@ -29,7 +52,7 @@ You can also replace the `google/flan-t5-xxl-fp16` JumpStart Foundation Model ho
 7. Deploy the `NlqSageMakerEndpointStack` CloudFormation template, using the Amazon SageMaker JumpStart Foundation Models option.
 8. Deploy the `NlqEcsSageMakerStack` CloudFormation template, or alternately the `NlqOpenAIStack` CloudFormation template for use with Option 2: OpenAI API.
 
-### 2. Create AWS Secret Manager Secrets
+## 2. Create AWS Secret Manager Secrets
 
 Make sure you update usernames and password.
 
@@ -56,7 +79,7 @@ aws secretsmanager create-secret \
     --secret-string "<your_openai_api_key"
 ```
 
-### 3. Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
+## 3. Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
 
 ```sh
 cd cloudformation/
@@ -68,7 +91,7 @@ aws cloudformation create-stack \
   --parameters ParameterKey="MyIpAddress",ParameterValue=$(curl -s http://checkip.amazonaws.com/)/32
 ```
 
-### 4. Build and Push the Docker Image to ECR
+## 4. Build and Push the Docker Image to ECR
 
 You can build the image locally, in a CI/CD pipeline, using SageMaker Notebook environment, or AWS Cloud9.
 
@@ -103,7 +126,7 @@ docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
 
-### 5. Import Sample Data and Configure the MoMA Database
+## 5. Import Sample Data and Configure the MoMA Database
 
 1. Connect to the `moma` database using you preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
 2. Create the two MoMA collection tables into the `moma` database.
@@ -153,7 +176,7 @@ CREATE TABLE public.artworks (
 --command " "\\copy public.artworks (artwork_id, title, artist_id, date, medium, dimensions, acquisition_date, credit, catalogue, department, classification, object_number, diameter_cm, circumference_cm, height_cm, length_cm, width_cm, depth_cm, weight_kg, durations) FROM 'moma_public_artworks.txt' DELIMITER '|' CSV HEADER QUOTE '\"' ESCAPE '''';""
 ```
 
-### 6. Add NLP Application to the MoMA Database
+## 6. Add NLP Application to the MoMA Database
 
 Create the read-only NQL Application database user account. Update the username and password you configured in step 2, with the secrets.
 
@@ -171,7 +194,7 @@ CREATE ROLE <your_nqlapp_username> WITH
 GRANT pg_read_all_data TO <your_nqlapp_username>;
 ```
 
-### 7. Deploy the ML Stack: Model, Endpoint
+## 7. Deploy the ML Stack: Model, Endpoint
 
 Option 1: SageMaker JumpStart FM Endpoint
 
@@ -184,7 +207,7 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### 8. Deploy the ECS Service Stack: Task, Service
+## 8. Deploy the ECS Service Stack: Task, Service
 
 Option 1: SageMaker JumpStart FM Endpoint
 
