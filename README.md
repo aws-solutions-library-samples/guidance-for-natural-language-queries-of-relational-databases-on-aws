@@ -1,6 +1,6 @@
 ## Generative AI-enabled Natural Language Relational Database Queries
 
-Natural Language Query (NLQ) demonstration using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models and optionally OpenAI's models via their API.
+Demonstration of Natural Language Query (NLQ) using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's models via their API. The demonstration's application uses [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), and [Chroma](https://www.trychroma.com/).
 
 ## Foundation Model Choice and Accuracy of NQL
 
@@ -206,4 +206,6 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
 
-````
+```
+
+```
