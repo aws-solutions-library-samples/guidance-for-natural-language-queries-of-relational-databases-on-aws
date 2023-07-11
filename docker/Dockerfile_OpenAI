@@ -1,0 +1,26 @@
+# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL 
+# and OpenAI's LLM models via their OpenAI API.
+# Author: Gary A. Stafford
+# Date: 2023-07-09
+
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install gcc g++ git make -y && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install langchain awscli boto3 \
+    python-dotenv SQLAlchemy psycopg2-binary \
+    pyyaml chromadb streamlit streamlit-chat openai -U
+
+RUN python3 -m pip install sentence-transformers -U --no-cache-dir
+
+RUN python3 -m pip list | grep "langchain\|sentence-transformers\|SQLAlchemy"
+
+EXPOSE 8501
+
+WORKDIR /tmp
+
+COPY sql_examples_postgresql.yaml sql_examples_postgresql.yaml
+COPY app_openai.py app.py
+
+CMD ["streamlit", "run", "app.py", "--server.port", "8501", "--theme.base", "light", "--logger.level", "info", "--client.showErrorDetails", "false", "--client.toolbarMode", "viewer", "--browser.gatherUsageStats", "false"]
