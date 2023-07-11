@@ -138,7 +138,7 @@ CREATE TABLE public.artworks (
 )
 ```
 
-3. Import the data into the `moma` database using the text files in the `/data` sub-directory. The data contains a header row and pipe-delimited ('|').
+3. Unzip and import the two data files into the `moma` database using the text files in the `/data` sub-directory. The both files contain a header row and pipe-delimited ('|').
 
 ```txt
 # examples commands from pgAdmin4
