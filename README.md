@@ -2,11 +2,11 @@
 
 Natural Language Query (NLQ) demonstration using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models and optionally OpenAI's models via their API.
 
-## Foundation Models and Accuracy of NQL
+## Foundation Model Choice and Accuracy of NQL
 
 The selection of the Foundation Model (FM) for NLQ plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs possess this capability. Additionally, the accuracy of the NLQ process relies heavily on the chosen model, as well as other factors such as the prompt, prompt-template, and sample queries used for in-context learning (also known as few-shot prompting).
 
-OpenAI GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`. These models are considered state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions, with minimal in-context learning. As an alternative to OpenAI, models such as the `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` models available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5-xxl` model is widely used as an FM, its capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The google/flan-t5-xxl model may fail, provide incorrect answers, or cause the JumpStart Foundation Model to experience timeouts when faced with even moderately complex questions.
+OpenAI GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`. These models are considered state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions, with minimal in-context learning. As an alternative to OpenAI, models such as the `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` models available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5` series of models are a popular choice, their capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model to experience timeouts when faced with even moderately complex questions.
 
 Transitioning from Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. The next build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push it to the ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will also need to create an OpenAI account and obtain your personal secret API key.
 
@@ -31,12 +31,12 @@ Make sure you update usernames and password.
 aws secretsmanager create-secret \
     --name /nlq/MasterUsername \
     --description "Master username for RDS instance." \
-    --secret-string "postgres"
+    --secret-string <your_master_username>
 
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUsername \
     --description "Master username for RDS instance." \
-    --secret-string "nlqapp"
+    --secret-string <your_nqlapp_username>
 
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUserPassword \
@@ -98,7 +98,7 @@ docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
 
-## 5-6. Import Sample Data and Configure the MoMA Database
+## 5. Import Sample Data and Configure the MoMA Database
 
 1. Connect to the `moma` database using you preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
 2. Create the two MoMA collection tables into the `moma` database.
@@ -148,10 +148,12 @@ CREATE TABLE public.artworks (
 --command " "\\copy public.artworks (artwork_id, title, artist_id, date, medium, dimensions, acquisition_date, credit, catalogue, department, classification, object_number, diameter_cm, circumference_cm, height_cm, length_cm, width_cm, depth_cm, weight_kg, durations) FROM 'moma_public_artworks.txt' DELIMITER '|' CSV HEADER QUOTE '\"' ESCAPE '''';""
 ```
 
-4. Create the NQL Application database user account. Use the `nlqapp` username and password you configured in the `NlqMainStack` CloudFormation template. Make sure you update the password.
+## 6. Add NLP Application to the MoMA Database
+
+Create the read-only NQL Application database user account. Update the username and password you configured in step 2, with the secrets.
 
 ```sql
-CREATE ROLE nlqapp WITH
+CREATE ROLE <your_nqlapp_username> WITH
 	LOGIN
 	NOSUPERUSER
 	NOCREATEDB
@@ -161,7 +163,7 @@ CREATE ROLE nlqapp WITH
 	CONNECTION LIMIT -1
 	PASSWORD '<your_nqlapp_password>';
 
-GRANT pg_read_all_data TO nlqapp;
+GRANT pg_read_all_data TO <your_nqlapp_username>;
 ```
 
 ## 7. Deploy the ML Stack: Model, Endpoint
