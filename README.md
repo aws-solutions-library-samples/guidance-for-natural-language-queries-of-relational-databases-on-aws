@@ -12,11 +12,11 @@ Demonstration of Natural Language Query (NLQ) using Amazon RDS for PostgreSQL an
 
 The selection of the Foundation Model (FM) for NLQ plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs possess this capability. Additionally, the accuracy of the NLQ process relies heavily on the chosen model, as well as other factors such as the prompt, prompt-template, and sample queries used for in-context learning (also known as few-shot prompting).
 
-OpenAI GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`. These models are considered state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions, with minimal in-context learning. As an alternative to OpenAI, models such as the `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` models available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5` series of models are a popular choice, their capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model to experience timeouts when faced with even moderately complex questions.
+OpenAI GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`. These models are considered state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions with minimal in-context learning. As an alternative to OpenAI, NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It's important to note that while the `google/flan-t5` series of models are a popular choice, their capabilities for NLQ are only a fraction of what OpenAI's GPT-3 and GPT-4 series models offer. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model to experience lengthy timeouts when faced with even moderately complex questions.
 
-Transitioning from Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. The next build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push it to the ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will also need to create an OpenAI account and obtain your personal secret API key.
+Transitioning from Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API is simple. This option eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. First, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push it to the ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will also need to create an OpenAI account and obtain your personal secret API key.
 
-You can also replace the `google/flan-t5-xxl-fp16` JumpStart Foundation Model hosted by the Amazon SageMaker endpoint, deployed by the existing `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the `NlqSageMakerEndpointStack.yaml` CloudFormation template file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you will have to make adjustments to the `app_sagemaker.py` file by modifying the `ContentHandler` Class to match the response payload of the chosen model. Rebuilding the Amazon ECR Docker Image using the `Dockerfile_SageMaker` Dockerfile and pushing it to the ECR repository will also be necessary. Lastly, you should update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker.yaml` CloudFormation template file (`NlqEcsStackSageMaker` CloudFormation stack).
+You can also replace the `google/flan-t5-xxl-fp16` JumpStart Foundation Model hosted by the Amazon SageMaker endpoint and deployed using the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the parameters in the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you will have to make adjustments to the `app_sagemaker.py` file, modifying the `ContentHandler` Class to match the response payload of the chosen model. Rebuilding the Amazon ECR Docker Image using the `Dockerfile_SageMaker` Dockerfile and pushing it to the ECR repository will also be necessary. Lastly, you should update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker` CloudFormation stack.
 
 ## Deployment Instructions
 
@@ -37,16 +37,16 @@ Make sure you update usernames and password.
 aws secretsmanager create-secret \
     --name /nlq/MasterUsername \
     --description "Master username for RDS instance." \
-    --secret-string <your_master_username>
+    --secret-string "<your_master_username>"
 
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUsername \
-    --description "Master username for RDS instance." \
-    --secret-string <your_nqlapp_username>
+    --description "NLQ Application username for MoMA database." \
+    --secret-string "<your_nqlapp_username>"
 
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUserPassword \
-    --description "Master username for RDS instance." \
+    --description "NLQ Application password for MoMA database." \
     --secret-string "<your_nqlapp_password>"
 
 # optional for Option 2: OpenAI API/model
