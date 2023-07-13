@@ -68,7 +68,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}a"
       CidrBlock: !Ref PublicSubnet1CIDR
       VpcId: !Ref VPC
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: "Project"
           Value: !Ref ProjectTagValue
@@ -79,7 +79,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}b"
       CidrBlock: !Ref PublicSubnet2CIDR
       VpcId: !Ref VPC
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: "Project"
           Value: !Ref ProjectTagValue
@@ -435,6 +435,107 @@ Resources:
         - !Ref SageMakerInvokeEndpointIAMManagedPolicy
         - !Ref SecretManagerIAMManagedPolicy
         - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  VPCEndpointECRDKR:
+      Type: "AWS::EC2::VPCEndpoint"
+      Properties:
+          VpcEndpointType: "Interface"
+          VpcId: !Ref VPC
+          ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+          PolicyDocument: |
+              {
+                "Statement": [
+                  {
+                    "Action": "*", 
+                    "Effect": "Allow", 
+                    "Principal": "*", 
+                    "Resource": "*"
+                  }
+                ]
+              }
+          SubnetIds: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          PrivateDnsEnabled: true
+          SecurityGroupIds: 
+            - !GetAtt VPCEndpointSecurityGroup.GroupId
+
+  VPCEndpointECRAPI:
+      Type: "AWS::EC2::VPCEndpoint"
+      Properties:
+          VpcEndpointType: "Interface"
+          VpcId: !Ref VPC
+          ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+          PolicyDocument: |
+              {
+                "Statement": [
+                  {
+                    "Action": "*", 
+                    "Effect": "Allow", 
+                    "Principal": "*", 
+                    "Resource": "*"
+                  }
+                ]
+              }
+          SubnetIds: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          PrivateDnsEnabled: true
+          SecurityGroupIds: 
+            - !GetAtt VPCEndpointSecurityGroup.GroupId
+
+  VPCEndpointS3GTW:
+      Type: "AWS::EC2::VPCEndpoint"
+      Properties:
+          VpcEndpointType: "Gateway"
+          VpcId: !Ref VPC
+          ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+          PolicyDocument: "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}"
+          RouteTableIds: 
+            - !Ref PublicRouteTable
+          PrivateDnsEnabled: false
+
+  VPCEndpointSecretsManager:
+      Type: "AWS::EC2::VPCEndpoint"
+      Properties:
+          VpcEndpointType: "Interface"
+          VpcId: !Ref VPC
+          ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
+          PolicyDocument: |
+              {
+                "Statement": [
+                  {
+                    "Action": "*", 
+                    "Effect": "Allow", 
+                    "Principal": "*", 
+                    "Resource": "*"
+                  }
+                ]
+              }
+          SubnetIds: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          PrivateDnsEnabled: true
+          SecurityGroupIds: 
+            - !GetAtt VPCEndpointSecurityGroup.GroupId
+
+  VPCEndpointSecurityGroup:
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+          GroupDescription: "VPC Endpoint Security Group"
+          VpcId: !Ref VPC
+          SecurityGroupIngress: 
+            - Description: "ECS Service Security Group"
+              SourceSecurityGroupId: !GetAtt ECSSecurityGroup.GroupId
+              SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+              FromPort: 443
+              IpProtocol: "tcp"
+              ToPort: 443
+          SecurityGroupEgress: 
+            - Description: Access to ECS Service from ALB
+              CidrIp: "0.0.0.0/0"
+              IpProtocol: "-1"
+
 
   ECRRepositoryUriSSMParam:
     Type: AWS::SSM::Parameter

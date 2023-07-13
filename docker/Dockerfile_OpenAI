@@ -1,26 +1,55 @@
-# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL 
-# and OpenAI's LLM models via their OpenAI API.
-# Author: Gary A. Stafford
-# Date: 2023-07-09
+# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
+# Author: Gary A. Stafford (garystaf@amazon.com)
+# Date: 2023-07-12
 
-FROM python:3.11-slim
+FROM python:3.11.4-slim
 
-RUN apt-get update && apt-get install gcc g++ git make -y && apt-get clean \
+# http://docs.projectatomic.io/ #labels
+LABEL name="nlq-genai" \
+    version="1.0.0-oai" \
+    maintainer="Gary A. Stafford (garystaf@amazon.com)"
+
+WORKDIR /app
+
+ENV PIP_DEFAULT_TIMEOUT=100 \
+    # allow statements and log messages to immediately appear
+    PYTHONUNBUFFERED=1 \
+    # disable a pip version check to reduce run-time & log-spam
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    # cache is useless in docker image, so disable to reduce image size
+    PIP_NO_CACHE_DIR=1
+
+COPY requirements.txt .
+
+RUN set -ex \
+    # create a non-root user
+    && groupadd --system --gid 1001 appgroup \
+    && useradd --system --uid 1001 --gid 1001 --create-home appuser \
+    # upgrade the package index and install security upgrades
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install gcc g++ git make -y \
+    # install dependencies
+    && pip install -r requirements.txt -U \
+    # clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install langchain awscli boto3 \
-    python-dotenv SQLAlchemy psycopg2-binary \
-    pyyaml chromadb streamlit streamlit-chat openai -U
+# copy required files to image
+COPY --chown=appuser:appgroup moma_examples.yaml .
+COPY --chown=appuser:appgroup app_openai.py app.py
 
-RUN python3 -m pip install sentence-transformers -U --no-cache-dir
-
-RUN python3 -m pip list | grep "langchain\|sentence-transformers\|SQLAlchemy"
+# CIS-DI-0006
+HEALTHCHECK --interval=5m --timeout=3s \
+    CMD curl -f http://localhost:8501/healthz || exit 1
 
 EXPOSE 8501
 
-WORKDIR /tmp
+CMD [ "streamlit", "run", "app.py", "--server.port", "8501", "--theme.base", \
+    "light", "--logger.level", "info", "--client.showErrorDetails", "false", \
+    "--client.toolbarMode", "viewer", "--browser.gatherUsageStats", "false" \
+    ]
 
-COPY sql_examples_postgresql.yaml sql_examples_postgresql.yaml
-COPY app_openai.py app.py
-
-CMD ["streamlit", "run", "app.py", "--server.port", "8501", "--theme.base", "light", "--logger.level", "info", "--client.showErrorDetails", "false", "--client.toolbarMode", "viewer", "--browser.gatherUsageStats", "false"]
+# Set the user to run the application
+USER appuser

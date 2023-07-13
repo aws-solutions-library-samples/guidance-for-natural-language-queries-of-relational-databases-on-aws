@@ -1,13 +1,23 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: "ECS resources for NLQ AWS Solution using Amazon SageMaker JumpStart Foundation Models."
 Parameters:
+  ECRImageTag:
+    Type: String
+    Default: "1.0.0-sm"
+    Description: The name of the ECR Image tag to use with ECS/Fargate.
+
+  TaskName:
+    Type: String
+    Default: "nlq-genai-sm"
+    Description: The name of the ECS Task and Fargate Service.
+
   ProjectTagValue:
     Type: String
     Default: "AWS Solution: NLQ Application"
     Description: The Project Tag value applied to all resources.
 
 Resources:
-  ECSTaskDefinition:
+  ECSTaskDefinitionSageMaker:
     Type: "AWS::ECS::TaskDefinition"
     Properties:
       ContainerDefinitions:
@@ -17,7 +27,7 @@ Resources:
             - Name: "ENDPOINT_NAME"
               Value: "{{resolve:ssm:/nlq/InferenceEndpointName}}"
           Essential: true
-          Image: "{{resolve:ssm:/nlq/ECRRepositoryUri}}:1.0.0-sm"
+          Image: !Sub "{{resolve:ssm:/nlq/ECRRepositoryUri}}:${ECRImageTag}"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -25,12 +35,12 @@ Resources:
               awslogs-group: "{{resolve:ssm:/nlq/ECSLogGroupName}}"
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: "ecs"
-          Name: "nlq-genai"
+          Name: !Ref TaskName
           PortMappings:
             - ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
               HostPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
               Protocol: "tcp"
-      Family: "nlq-genai"
+      Family: !Ref TaskName
       TaskRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
       ExecutionRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
       NetworkMode: "awsvpc"
@@ -42,19 +52,19 @@ Resources:
         - Key: "Project"
           Value: !Ref ProjectTagValue
 
-  ECSService:
+  ECSServiceSageMaker:
     Type: "AWS::ECS::Service"
     Properties:
-      ServiceName: "nlq-genai"
+      ServiceName: !Ref TaskName
       Cluster: "{{resolve:ssm:/nlq/ECSClusterArn}}"
       LoadBalancers:
         - TargetGroupArn: "{{resolve:ssm:/nlq/TargetGroupTargetGroupArn}}"
-          ContainerName: "nlq-genai"
+          ContainerName: !Ref TaskName
           ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
       DesiredCount: 1
       LaunchType: "FARGATE"
       PlatformVersion: "LATEST"
-      TaskDefinition: !Ref ECSTaskDefinition
+      TaskDefinition: !Ref ECSTaskDefinitionSageMaker
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
