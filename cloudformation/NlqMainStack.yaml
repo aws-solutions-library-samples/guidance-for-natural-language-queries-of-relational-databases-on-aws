@@ -68,7 +68,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}a"
       CidrBlock: !Ref PublicSubnet1CIDR
       VpcId: !Ref VPC
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: "Project"
           Value: !Ref ProjectTagValue
@@ -79,7 +79,7 @@ Resources:
       AvailabilityZone: !Sub "${AWS::Region}b"
       CidrBlock: !Ref PublicSubnet2CIDR
       VpcId: !Ref VPC
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: "Project"
           Value: !Ref ProjectTagValue
