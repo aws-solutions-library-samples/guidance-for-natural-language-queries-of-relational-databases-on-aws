@@ -1,23 +1,40 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: "ECS resources for NLQ AWS Solution using OpenAI's LLM models via their API."
 Parameters:
+  OpenAIModelName:
+    Type: String
+    Default: "gpt-3.5-turbo"
+    Description: The OpenAI LLM to call via their API.
+
+  ECRImageTag:
+    Type: String
+    Default: "1.0.0-oai"
+    Description: The name of the ECR Image tag to use with ECS/Fargate.
+
+  TaskName:
+    Type: String
+    Default: "nlq-genai-oai"
+    Description: The name of the ECS Task and Fargate Service.
+
   ProjectTagValue:
     Type: String
     Default: "AWS Solution: NLQ Application"
     Description: The Project Tag value applied to all resources.
 
 Resources:
-  ECSTaskDefinition:
+  ECSTaskDefinitionOpenAI:
     Type: "AWS::ECS::TaskDefinition"
     Properties:
       ContainerDefinitions:
         - Environment:
             - Name: "REGION_NAME"
               Value: !Ref AWS::Region
+            - Name: "MODEL_NAME"
+              Value: !Ref OpenAIModelName
             - Name: "OPENAI_API_KEY"
               Value: "{{resolve:secretsmanager:/nlq/OpenAIAPIKey}}"
           Essential: true
-          Image: "{{resolve:ssm:/nlq/ECRRepositoryUri}}:1.0.0-oai"
+          Image: !Sub "{{resolve:ssm:/nlq/ECRRepositoryUri}}:${ECRImageTag}"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -25,12 +42,12 @@ Resources:
               awslogs-group: "{{resolve:ssm:/nlq/ECSLogGroupName}}"
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: "ecs"
-          Name: "nlq-genai"
+          Name: !Ref TaskName
           PortMappings:
             - ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
               HostPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
               Protocol: "tcp"
-      Family: "nlq-genai"
+      Family: !Ref TaskName
       TaskRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
       ExecutionRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
       NetworkMode: "awsvpc"
@@ -42,19 +59,19 @@ Resources:
         - Key: "Project"
           Value: !Ref ProjectTagValue
 
-  ECSService:
+  ECSServiceOpenAI:
     Type: "AWS::ECS::Service"
     Properties:
-      ServiceName: "nlq-genai"
+      ServiceName: !Ref TaskName
       Cluster: "{{resolve:ssm:/nlq/ECSClusterArn}}"
       LoadBalancers:
         - TargetGroupArn: "{{resolve:ssm:/nlq/TargetGroupTargetGroupArn}}"
-          ContainerName: "nlq-genai"
+          ContainerName: !Ref TaskName
           ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
       DesiredCount: 1
       LaunchType: "FARGATE"
       PlatformVersion: "LATEST"
-      TaskDefinition: !Ref ECSTaskDefinition
+      TaskDefinition: !Ref ECSTaskDefinitionOpenAI
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 100

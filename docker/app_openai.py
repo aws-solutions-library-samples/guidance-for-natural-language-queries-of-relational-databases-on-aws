@@ -1,6 +1,6 @@
-# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI GPT-3 series model.
+# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-07-10
+# Date: 2023-07-12
 # Application expects the following environment variables (adjust for your environment):
 # export OPENAI_API_KEY=<your_api_key>
 # export REGION_NAME="us-east-1"
@@ -154,7 +154,7 @@ def main():
             st.write("Answer:")
             st.code(st.session_state["generated"][position]["result"], language="text")
         else:
-            st.write("Nothing to see here...")
+            st.markdown("Nothing to see here...")
 
 
 def set_openai_api_key(region_name):
@@ -209,7 +209,7 @@ def load_samples():
     # Use the corrected examples for few-shot prompting examples
     sql_samples = None
 
-    with open("sql_examples_postgresql.yaml", "r") as stream:
+    with open("moma_examples.yaml", "r") as stream:
         sql_samples = yaml.safe_load(stream)
 
     return sql_samples
@@ -233,6 +233,7 @@ def load_few_shot_chain(llm, db, examples):
         local_embeddings,
         Chroma,
         k=min(3, len(examples)),
+        persist_directory="/home/appuser",
     )
 
     few_shot_prompt = FewShotPromptTemplate(
@@ -247,7 +248,7 @@ def load_few_shot_chain(llm, db, examples):
         llm,
         db,
         prompt=few_shot_prompt,
-        use_query_checker=False,
+        use_query_checker=False, # must be False for OpenAI model
         verbose=True,
         return_intermediate_steps=True,
     )
@@ -273,14 +274,14 @@ def clear_text():
 def build_sidebar():
     with st.sidebar:
         with st.container():
-            st.header("Under the Hood")
+            st.markdown("# Under the Hood")
 
 
 def build_form(col1, col2):
     with col1:
         with st.container():
             st.markdown("# Natural Language Query (NLQ) Demo")
-            st.markdown("## Ask questions of your data using natural language.")
+            st.markdown("### Ask questions of your Amazon RDS database using natural language.")
 
         with st.container():
             with st.expander("Click here for sample questions..."):

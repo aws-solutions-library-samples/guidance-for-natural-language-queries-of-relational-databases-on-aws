@@ -98,23 +98,22 @@ aws cloudformation create-stack \
 You can build the image locally, in a CI/CD pipeline, using SageMaker Notebook environment, or AWS Cloud9.
 
 ```sh
-# Located in the output from the nlq-genai-infra CloudFormation template
 cd docker/
 
+# Located in the output from the NlqMlStack CloudFormation template
 # e.g. 111222333444.dkr.ecr.us-east-1.amazonaws.com/nlq-genai
-ECS_REPOSITORY="<you_ecs_repository>"
+ECS_REPOSITORY="<you_ecr_repository>"
+
+aws ecr get-login-password --region us-east-1 | \
+	docker login --username AWS --password-stdin $ECS_REPOSITORY
+
 ```
 
 Option 1: SageMaker JumpStart FM Endpoint
 
 ```sh
 TAG="1.0.0-sm"
-
-aws ecr get-login-password --region us-east-1 | \
-	docker login --username AWS --password-stdin $ECS_REPOSITORY
-
 docker build -f Dockerfile_SageMaker -t $ECS_REPOSITORY:$TAG .
-
 docker push $ECS_REPOSITORY:$TAG
 ```
 
@@ -122,9 +121,7 @@ Option 2: OpenAI API
 
 ```sh
 TAG="1.0.0-oai"
-
 docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
-
 docker push $ECS_REPOSITORY:$TAG
 ```
 
