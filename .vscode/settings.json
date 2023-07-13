@@ -1,5 +1,0 @@
-{
-    "yaml.schemas": {
-        "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": "file:///Users/garystaf/Documents/Projects/guidance-for-natural-language-queries-of-relational-databases-on-aws/docker/Dockerfile_OpenAI"
-    }
-}
