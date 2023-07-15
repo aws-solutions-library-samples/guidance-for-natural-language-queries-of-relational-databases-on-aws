@@ -149,19 +149,21 @@ def main():
         if (position >= 0) and (
             st.session_state["generated"][position] != NO_ANSWER_MSG
         ):
-            st.write("Question:")
+            st.markdown("SageMaker JumpStart Foundation Model Endpoint:")
+            st.code(ENDPOINT_NAME, language="text")
+            st.markdown("Question:")
             st.code(st.session_state["generated"][position]["query"], language="text")
-            st.write("SQL Query:")
+            st.markdown("SQL Query:")
             st.code(
                 st.session_state["generated"][position]["intermediate_steps"][1],
                 language="sql",
             )
-            st.write("Results:")
+            st.markdown("Results:")
             st.code(
                 st.session_state["generated"][position]["intermediate_steps"][3],
                 language="python",
             )
-            st.write("Answer:")
+            st.markdown("Answer:")
             st.code(st.session_state["generated"][position]["result"], language="text")
         else:
             st.markdown("Nothing to see here...")
@@ -240,7 +242,6 @@ def load_few_shot_chain(llm, db, examples):
         local_embeddings,
         Chroma,
         k=min(3, len(examples)),
-        persist_directory="/home/appuser"
     )
 
     few_shot_prompt = FewShotPromptTemplate(
@@ -255,7 +256,7 @@ def load_few_shot_chain(llm, db, examples):
         llm,
         db,
         prompt=few_shot_prompt,
-        use_query_checker=True, # must be True for flan-t5 model
+        use_query_checker=True,  # must be True for flan-t5 models
         verbose=True,
         return_intermediate_steps=True,
     )
@@ -287,8 +288,10 @@ def build_sidebar():
 def build_form(col1, col2):
     with col1:
         with st.container():
-            st.markdown("# Natural Language Query (NLQ) Demo")
-            st.markdown("### Ask questions of your Amazon RDS database using natural language.")
+            st.markdown("## Natural Language Query (NLQ) Demonstration")
+            st.markdown(
+                "Ask questions about The Museum of Modern Art (MoMA) Collection using natural language."
+            )
 
         with st.container():
             with st.expander("Click here for sample questions..."):
@@ -301,11 +304,16 @@ def build_form(col1, col2):
                 How many artworks are classified as paintings?
                 How many artworks were created by Spanish artists?
                 How many artist names start with the letter 'M'?
+                ---
+                How many artists are deceased as a percentage of all artists?
                 Who is the most prolific artist in the collection? What is their nationality?
                 What nationality of artists created the most artworks in the collection?
                 What is the ratio of male to female artists. Return as a ratio.
+                How many artworks were produced during the First World War, which are classified as paintings?
                 What are the five oldest artworks in the collection? Return the title and date for each.
                 Return the artwork for Frida Kahlo in a numbered list, including title and date.
+                What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
+                ---
                 Give me a recipe for chocolate cake.
                 """
                 )
