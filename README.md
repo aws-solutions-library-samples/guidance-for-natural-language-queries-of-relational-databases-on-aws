@@ -1,6 +1,6 @@
 ## Generative AI-enabled Natural Language Relational Database Queries
 
-This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's Generative Pre-training Transformer (GPT) models via their API. The demonstration's web-based application uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to perform NLQ based on end-user input.
+This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's Generative Pre-trained Transformer (GPT) models via their API. The demonstration's web-based application uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to perform NLQ based on end-user input.
 
 ### NLQ Application Web-based UI
 
@@ -16,7 +16,7 @@ The selection of the Foundation Model (FM) for Natural Language Query (NLQ) play
 
 The NLQ Application was tested on a large variety of FMs. OpenAI's GPT-3 series `gpt-3.5-turbo` model is capable of accurately answering all sample questions included in the application's web-based UI. OpenAI GPT-3 and GPT-4 series models, like `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4` are considered current state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions with minimal in-context learning or additional prompt engineering.
 
-NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It is important to note that while the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model endpoint to experience lengthy timeouts when faced with even moderately complex questions. User are encouraged to test a variety of JumpStart Foundation Models for best results.
+NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It is important to note that while the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model endpoint to experience lengthy timeouts when faced with even moderately complex questions. Users are encouraged to test a variety of JumpStart Foundation Models for best results.
 
 ### Optional: Switching Foundation Models
 
@@ -28,7 +28,7 @@ Transitioning from the solution's Amazon SageMaker JumpStart Foundation Models t
 
 ## Sample Dataset
 
-This solution uses an optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection. The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported in the Amazon RDS for PostgreSQL database instance.
+This solution uses an optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection. The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported into the Amazon RDS for PostgreSQL database instance.
 
 Using the MoMA dataset, we can ask natural language questions, like:
 
@@ -42,29 +42,29 @@ Using the MoMA dataset, we can ask natural language questions, like:
 - How many artists are deceased as a percentage of all artists?
 - Who is the most prolific artist in the collection? What is their nationality?
 - What nationality of artists created the most artworks in the collection?
-- What is the ratio of male to female artists. Return as a ratio.
+- What is the ratio of male to female artists? Return as a ratio.
 - How many artworks were produced during the First World War, which are classified as paintings?
 - What are the five oldest artworks in the collection? Return the title and date for each.
-- Return the artwork for Frida Kahlo in a numbered list, including title and date.
-- What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
+- Return the artwork for Frida Kahlo in a numbered list, including the title and date.
+- What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
 - Give me a recipe for chocolate cake.
 
 Again, the ability of the NLQ Application to return an answer and return an accurate answer, is primarily dependent on the choice of model. Not all models are capable of NLQ, while others will not return accurate answers.
 
 ## Deployment Instructions
 
-1. If using Option 1: SageMaker JumpStart FM Endpoint, make you have the required EC2 instance for the endpoint inference, or request it using Service Quotas in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model: https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B). Refer to the model's documentation for choice of instance type.
+1. If you use Option 1: SageMaker JumpStart FM Endpoint, make you have the required EC2 instance for the endpoint inference, or request it using Service Quotas in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model: https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B). Refer to the model's documentation for the choice of instance type.
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
 3. Deploy the `NlqMainStack` CloudFormation template.
-4. If using Option 1: SageMaker JumpStart FM Endpoint, build and push the `nlq-genai:1.0.0-sm` Docker image to the new Amazon ECR repository. Alternately, build and push the `nlq-genai:1.0.0-oai` Docker image for use with Option 2: OpenAI API.
+4. If you use Option 1: SageMaker JumpStart FM Endpoint, build and push the `nlq-genai:1.0.0-sm` Docker image to the new Amazon ECR repository. Alternately, build and push the `nlq-genai:1.0.0-oai` Docker image for use with Option 2: OpenAI API.
 5. Import the included sample data into the Amazon RDS MoMA database.
 6. Add the `nlqapp` user to the MoMA database.
 7. Deploy the `NlqSageMakerEndpointStack` CloudFormation template, using the Amazon SageMaker JumpStart Foundation Models option.
-8. If using Option 1: SageMaker JumpStart FM Endpoint, deploy the `NlqEcsSageMakerStack` CloudFormation template. Alternately, deploy the `NlqOpenAIStack` CloudFormation template for use with Option 2: OpenAI API.
+8. If you use Option 1: SageMaker JumpStart FM Endpoint, deploy the `NlqEcsSageMakerStack` CloudFormation template. Alternately, deploy the `NlqOpenAIStack` CloudFormation template for use with Option 2: OpenAI API.
 
 ### 2. Create AWS Secret Manager Secrets
 
-Make sure you update usernames and password.
+Make sure you update the secret values before continuing.
 
 ```sh
 aws secretsmanager create-secret \
@@ -135,7 +135,7 @@ docker push $ECS_REPOSITORY:$TAG
 
 ### 5. Import Sample Data and Configure the MoMA Database
 
-1. Connect to the `moma` database using you preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
+1. Connect to the `moma` database using your preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
 
 2. Create the two MoMA collection tables into the `moma` database.
 
