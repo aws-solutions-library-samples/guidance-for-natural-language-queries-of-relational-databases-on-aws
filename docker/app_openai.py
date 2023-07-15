@@ -301,11 +301,11 @@ def build_form(col1, col2):
                 How many artists are deceased as a percentage of all artists?
                 Who is the most prolific artist in the collection? What is their nationality?
                 What nationality of artists created the most artworks in the collection?
-                What is the ratio of male to female artists. Return as a ratio.
+                What is the ratio of male to female artists? Return as a ratio.
                 How many artworks were produced during the First World War, which are classified as paintings?
                 What are the five oldest artworks in the collection? Return the title and date for each.
-                Return the artwork for Frida Kahlo in a numbered list, including title and date.
-                What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
+                Return the artwork for Frida Kahlo in a numbered list, including the title and date.
+                What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
                 ---
                 Give me a recipe for chocolate cake.
                 """
