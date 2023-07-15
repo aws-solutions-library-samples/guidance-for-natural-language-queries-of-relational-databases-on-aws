@@ -9,8 +9,6 @@ LABEL name="nlq-genai" \
     version="1.0.0-oai" \
     maintainer="Gary A. Stafford (garystaf@amazon.com)"
 
-WORKDIR /app
-
 ENV PIP_DEFAULT_TIMEOUT=100 \
     # allow statements and log messages to immediately appear
     PYTHONUNBUFFERED=1 \
@@ -36,6 +34,8 @@ RUN set -ex \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /home/appuser/
+
 # copy required files to image
 COPY --chown=appuser:appgroup moma_examples.yaml .
 COPY --chown=appuser:appgroup app_openai.py app.py
@@ -47,7 +47,7 @@ HEALTHCHECK --interval=5m --timeout=3s \
 EXPOSE 8501
 
 CMD [ "streamlit", "run", "app.py", "--server.port", "8501", "--theme.base", \
-    "light", "--logger.level", "info", "--client.showErrorDetails", "false", \
+    "dark", "--logger.level", "info", "--client.showErrorDetails", "false", \
     "--client.toolbarMode", "viewer", "--browser.gatherUsageStats", "false" \
     ]
 
