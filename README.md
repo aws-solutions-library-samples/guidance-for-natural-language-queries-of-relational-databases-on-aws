@@ -10,7 +10,7 @@ This AWS Solution contains a demonstration of Generative AI, specifically, the u
 
 ![NLQ Application Preview 2](./pics/nlqapp_preview_2.png)
 
-## Foundation Model Choice and Accuracy of NQL
+## Foundation Model Choice and Accuracy of NLQ
 
 The selection of the Foundation Model (FM) for Natural Language Query (NLQ) plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs possess NLQ capabilities. In addition to model choice, accuracy also relies heavily on factors such as the quality of the prompt, prompt-template, and labeled sample queries used for in-context learning (aka few-shot prompting).
 
@@ -75,12 +75,12 @@ aws secretsmanager create-secret \
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUsername \
     --description "NLQ Application username for MoMA database." \
-    --secret-string "<your_nqlapp_username>"
+    --secret-string "<your_nlqapp_username>"
 
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUserPassword \
     --description "NLQ Application password for MoMA database." \
-    --secret-string "<your_nqlapp_password>"
+    --secret-string "<your_nlqapp_password>"
 
 # optional for Option 2: OpenAI API/model
 aws secretsmanager create-secret \
@@ -186,10 +186,10 @@ CREATE TABLE public.artworks (
 
 ### 6. Add NLQ Application to the MoMA Database
 
-Create the read-only NQL Application database user account. Update the username and password you configured in step 2, with the secrets.
+Create the read-only NLQ Application database user account. Update the username and password you configured in step 2, with the secrets.
 
 ```sql
-CREATE ROLE <your_nqlapp_username> WITH
+CREATE ROLE <your_nlqapp_username> WITH
 	LOGIN
 	NOSUPERUSER
 	NOCREATEDB
@@ -197,9 +197,9 @@ CREATE ROLE <your_nqlapp_username> WITH
 	INHERIT
 	NOREPLICATION
 	CONNECTION LIMIT -1
-	PASSWORD '<your_nqlapp_password>';
+	PASSWORD '<your_nlqapp_password>';
 
-GRANT pg_read_all_data TO <your_nqlapp_username>;
+GRANT pg_read_all_data TO <your_nlqapp_username>;
 ```
 
 ### 7. Deploy the ML Stack: Model, Endpoint
