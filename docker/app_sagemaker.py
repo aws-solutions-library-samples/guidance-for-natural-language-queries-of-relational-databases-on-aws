@@ -198,8 +198,8 @@ def main():
             if (position >= 0) and (
                 st.session_state["generated"][position] != NO_ANSWER_MSG
             ):
-                st.markdown("OpenAI Model:")
-                st.code(MODEL_NAME, language="text")
+                st.markdown("SageMaker JumpStart Foundation Model Endpoint:")
+                st.code(ENDPOINT_NAME, language="text")
 
                 st.markdown("Question:")
                 st.code(
