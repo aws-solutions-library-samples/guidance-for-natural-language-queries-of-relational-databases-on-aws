@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: "ECS resources for NLQ AWS Solution using Amazon SageMaker JumpStart Foundation Models."
+Description: "(SO9250) Guidance for Natural Language Queries (NLQ) of Relational Databases on AWS - ECS for SageMaker FM stack template."
 Parameters:
   ECRImageTag:
     Type: String
@@ -13,7 +13,7 @@ Parameters:
 
   ProjectTagValue:
     Type: String
-    Default: "AWS Solution: NLQ Application"
+    Default: "(SO9250) Guidance for Natural Language Queries (NLQ) of Relational Databases on AWS"
     Description: The Project Tag value applied to all resources.
 
 Resources:
