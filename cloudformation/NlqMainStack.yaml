@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: "Networking, security, Amazon ECR repository, and Amazon RDS resources for NLQ AWS Solution."
+Description: "Networking, security, Amazon ECR repository, and Amazon RDS resources for NLQ AWS Solution. Guidance for Natural Language Queries of Relational Databases on AWS (SO9250)"
 Parameters:
   VpcCIDR:
     Description: The IP range (CIDR notation) for this VPC
