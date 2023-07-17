@@ -1,6 +1,6 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-07-12
+# Date: 2023-07-17
 # Application expects the following environment variables (adjust for your environment):
 # export OPENAI_API_KEY="sk-<your_api_key>""
 # export REGION_NAME="us-east-1"
@@ -12,22 +12,24 @@ import json
 import logging
 import os
 
-import altair as alt
 import boto3
 import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain import (FewShotPromptTemplate, PromptTemplate, SQLDatabase,
-                       SQLDatabaseChain)
-from langchain.chains.sql_database.prompt import (PROMPT_SUFFIX,
-                                                  _postgres_prompt)
+from langchain import (
+    FewShotPromptTemplate,
+    PromptTemplate,
+    SQLDatabase,
+    SQLDatabaseChain,
+)
+from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.prompts.example_selector.semantic_similarity import \
-    SemanticSimilarityExampleSelector
+from langchain.prompts.example_selector.semantic_similarity import (
+    SemanticSimilarityExampleSelector,
+)
 from langchain.vectorstores import Chroma
-from streamlit_chat import message
 
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
@@ -40,20 +42,20 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    hide_streamlit_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        </style>
+    # # hide the hamburger bar menu
+    # hide_streamlit_style = """
+    #     <style>
+    #     #MainMenu {visibility: hidden;}
+    #     footer {visibility: hidden;}
+    #     </style>
 
-    """
-    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+    # """
+    # st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-    NO_ANSWER_MSG = "I'm sorry, I was not able to answer your question."
-
     os.environ["OPENAI_API_KEY"] = set_openai_api_key(REGION_NAME)
+
+    NO_ANSWER_MSG = "Sorry, I was unable to answer your question."
 
     llm = ChatOpenAI(
         model_name=MODEL_NAME,
@@ -70,7 +72,7 @@ def main():
 
     sql_db_chain = load_few_shot_chain(llm, db, examples)
 
-    # Store the initial value of widgets in session state
+    # store the initial value of widgets in session state
     if "visibility" not in st.session_state:
         st.session_state.visibility = "visible"
         st.session_state.disabled = False
@@ -87,19 +89,18 @@ def main():
     if "query_text" not in st.session_state:
         st.session_state["query_text"] = []
 
-    # define stearmlit tabs
-    tab1, tab2 = st.tabs(["Chat", "Details"])
+    tab1, tab2, tab3 = st.tabs(["Chatbot", "Details", "Technologies"])
 
     with tab1:
-        # define streamlit columns
         col1, col2 = st.columns([6, 1], gap="medium")
 
         with col1:
             with st.container():
-                st.markdown("## Natural Language Query (NLQ) Demonstration")
+                st.markdown("## The Museum of Modern Art (MoMA) Collection")
                 st.markdown(
-                    "##### Ask questions about The Museum of Modern Art (MoMA) Collection using natural language."
+                    "#### Query the collection’s dataset using natural language."
                 )
+                st.markdown(" ")
                 with st.expander("Click here for sample questions..."):
                     st.markdown(
                         """
@@ -112,11 +113,13 @@ def main():
                         * How many artist names start with the letter 'M'?
                         ---
                         * How many artists are deceased as a percentage of all artists?
-                        * Who is the most prolific artist in the collection? What is their nationality?
-                        * What nationality of artists created the most artworks in the collection?
+                        * Who is the most prolific artist? What is their nationality?
+                        * What nationality of artists created the most artworks?
                         * What is the ratio of male to female artists? Return as a ratio.
                         * How many artworks were produced during the First World War, which are classified as paintings?
-                        * What are the five oldest artworks in the collection? Return the title and date for each.
+                        ---
+                        * What are the five oldest? Return the title and date for each.
+                        * What are the 10 most prolific artists? Return their name and count of artwork.
                         * Return the artwork for Frida Kahlo in a numbered list, including the title and date.
                         * What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
                         * What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
@@ -125,7 +128,7 @@ def main():
                         * Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
                     """
                     )
-
+                st.markdown(" ")
             with st.container():
                 input_text = st.text_input(
                     "Ask a question:",
@@ -150,6 +153,7 @@ def main():
                             st.session_state.generated.append(NO_ANSWER_MSG)
                             logging.error(exc)
 
+                # https://discuss.streamlit.io/t/streamlit-chat-avatars-not-working-on-cloud/46713/2
                 if st.session_state["generated"]:
                     with col1:
                         for i in range(len(st.session_state["generated"]) - 1, -1, -1):
@@ -157,26 +161,32 @@ def main():
                                 st.session_state["generated"][i] != NO_ANSWER_MSG
                             ):
                                 with st.chat_message(
-                                    "assistant", avatar="app/static/bot-64px.png"
+                                    "assistant",
+                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
-                                with st.chat_message("user", avatar="app/static/man-64px.png"):
+                                with st.chat_message(
+                                    "user",
+                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
-                                    "assistant", avatar="app/static/bot-64px.png"
+                                    "assistant",
+                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
                                 ):
                                     st.write(NO_ANSWER_MSG)
-                                with st.chat_message("user", avatar="app/static/man-64px.png"):
+                                with st.chat_message(
+                                    "user",
+                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                ):
                                     st.write(st.session_state["past"][i])
         with col2:
             with st.container():
                 st.button("clear chat", on_click=clear_session)
-
     with tab2:
         with st.container():
-            st.markdown("# Under the Hood")
-
+            st.markdown("### Details")
             position = len(st.session_state["generated"]) - 1
             if (position >= 0) and (
                 st.session_state["generated"][position] != NO_ANSWER_MSG
@@ -211,37 +221,83 @@ def main():
                 )
                 df = None
                 if len(data[0]) == 2:
-                    st.markdown("Table:")
+                    st.markdown("Table (Pandas DataFrame):")
                     df = pd.DataFrame(data, columns=["Category", "Metric"])
                     df = df.astype({"Metric": "str"})
                     df.sort_values(by=["Metric"])
                     df
-
-                if len(data[0]) == 2:
-                    # ax = df.plot.bar()
-                    # st.bar_chart(data=df, x='Category', y='Count', use_container_width=True)
-
-                    st.markdown("Chart:")
-                    df = df.astype({"Metric": "Int64"})
-                    chart = (
-                        alt.Chart(df)
-                        .mark_bar()
-                        .encode(
-                            x=alt.X("Category", sort=None),
-                            y="Metric",
-                        )
-                        .interactive()
-                    )
-                    st.altair_chart(chart, theme="streamlit", use_container_width=True)
             else:
                 st.markdown("Nothing to see here...")
+    with tab3:
+        with st.container():
+            st.markdown("### Technologies")
+            st.markdown(" ")
+
+            st.markdown("##### Natural Language Query (NLQ)")
+            st.markdown(
+                """
+            [Natural language query (NLQ)](https://www.yellowfinbi.com/glossary/natural-language-query), according to Yellowfin, enables analytics users to ask questions of their data. It parses for keywords and generates relevant answers sourced from related databases, with results typically delivered as a report, chart or textual explanation that attempt to answer the query, and provide depth of understanding.
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### The MoMa Collection Datasets")
+            st.markdown(
+                """
+            [The Museum of Modern Art (MoMA) Collection](https://github.com/MuseumofModernArt/collection) contains over 120,000 pieces of artwork and 15,000 artists. The datasets are available on GitHub in CSV format, encoded in UTF-8. The datasets are also available in JSON. The datasets are provided to the public domain using a [CC0 License](https://creativecommons.org/publicdomain/zero/1.0/).
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### Amazon SageMaker JumpStart Foundation Models")
+            st.markdown(
+                """
+            [Amazon SageMaker JumpStart Foundation Models](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models.html) offers state-of-the-art foundation models for use cases such as content writing, image and code generation, question answering, copywriting, summarization, classification, information retrieval, and more.
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### LangChain")
+            st.markdown(
+                """
+            [LangChain](https://python.langchain.com/en/latest/index.html) is a framework for developing applications powered by language models. LangChain provides standard, extendable interfaces and external integrations.
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### Chroma")
+            st.markdown(
+                """
+            [Chroma](https://www.trychroma.com/) is the open-source embedding database. Chroma makes it easy to build LLM apps by making knowledge, facts, and skills pluggable for LLMs.
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### Streamlit")
+            st.markdown(
+                """
+            [Streamlit](https://streamlit.io/) is an open-source app framework for Machine Learning and Data Science teams. Streamlit turns data scripts into shareable web apps in minutes. All in pure Python. No front-end experience required.
+            """
+            )
+            st.markdown(" ")
+
+            st.markdown("##### OpenAI API")
+            st.markdown(
+                """
+            The [OpenAI API](https://platform.openai.com/docs/introduction), optional for this solution, can be applied to virtually any task that requires understanding or generating natural language and code. OpenAI offer a range of models with different capabilities, including the ability to fine-tune custom models.
+            """
+            )
+
         with st.container():
             st.markdown("""---""")
             st.markdown(
-                "![](app/static/github-24px-wht.png) [Submit feature request or bug report](https://github.com/aws-solutions-library-samples/guidance-for-natural-language-queries-of-relational-databases-on-aws/issues)"
+                "![](app/static/github-24px-blk.png) [Feature request or bug report?](https://github.com/aws-solutions-library-samples/guidance-for-natural-language-queries-of-relational-databases-on-aws/issues)"
             )
             st.markdown(
-                "![](app/static/github-24px-wht.png) [Source code](https://github.com/aws-solutions-library-samples/guidance-for-natural-language-queries-of-relational-databases-on-aws)"
+                "![](app/static/github-24px-blk.png) [The MoMA Collection datasets on GitHub](https://github.com/MuseumofModernArt/collection)"
+            )
+            st.markdown(
+                "![](app/static/flaticon-24px.png) [Icons courtesy flaticon](https://www.flaticon.com)"
             )
 
 
@@ -294,7 +350,7 @@ def get_rds_uri(region_name):
 
 
 def load_samples():
-    # Use the corrected examples for few-shot prompting examples
+    # Load the sql examples for few-shot prompting examples
     sql_samples = None
 
     with open("moma_examples.yaml", "r") as stream:
