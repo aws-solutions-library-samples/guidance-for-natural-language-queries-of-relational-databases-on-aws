@@ -4,7 +4,7 @@
 # Application expects the following environment variables (adjust for your environment):
 # export ENDPOINT_NAME="hf-text2text-flan-t5-xxl-fp16"
 # export REGION_NAME="us-east-1"
-# Usage: streamlit run app.py --server.runOnSave true
+# Usage: streamlit run app_sagemaker.py --server.runOnSave true
 
 import json
 import logging

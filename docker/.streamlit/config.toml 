@@ -1,0 +1,20 @@
+[browser]
+gatherUsageStats = false
+
+[client]
+displayEnabled = false
+showErrorDetails = false
+
+[logger]
+level = info
+
+[server]
+enableStaticServing = true
+port = 8501
+
+[theme]
+primaryColor = "#33a8f6"
+backgroundColor = "#101010"
+secondaryBackgroundColor = "#1C1C1C"
+textColor = "#FFFFFF"
+font = "sans serif"

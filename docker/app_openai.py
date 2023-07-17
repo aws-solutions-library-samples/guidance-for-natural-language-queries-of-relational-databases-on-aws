@@ -2,16 +2,19 @@
 # Author: Gary A. Stafford (garystaf@amazon.com)
 # Date: 2023-07-12
 # Application expects the following environment variables (adjust for your environment):
-# export OPENAI_API_KEY=<your_api_key>
+# export OPENAI_API_KEY="sk-<your_api_key>""
 # export REGION_NAME="us-east-1"
 # export MODEL_NAME="gpt-3.5-turbo"
-# Usage: streamlit run app.py --server.runOnSave true
+# Usage: streamlit run app_openai.py --server.runOnSave true
 
+import ast
 import json
 import logging
 import os
 
+import altair as alt
 import boto3
+import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
@@ -36,6 +39,15 @@ def main():
         layout="wide",
         initial_sidebar_state="collapsed",
     )
+
+    hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        </style>
+
+    """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -75,88 +87,162 @@ def main():
     if "query_text" not in st.session_state:
         st.session_state["query_text"] = []
 
-    # define streamlit colums
-    col1, col2 = st.columns([2, 1], gap="large")
+    # define stearmlit tabs
+    tab1, tab2 = st.tabs(["Chat", "Details"])
 
-    # build the streamlit sidebar
-    build_sidebar()
+    with tab1:
+        # define streamlit columns
+        col1, col2 = st.columns([6, 1], gap="medium")
 
-    # build the main app ui
-    build_form(col1, col2)
-
-    # get the users query
-    get_text(col1)
-    user_input = st.session_state["query"]
-
-    if user_input:
-        with st.spinner(text="In progress..."):
-            st.session_state.past.append(user_input)
-            try:
-                output = sql_db_chain(user_input)
-                st.session_state.generated.append(output)
-                logging.info(st.session_state["query"])
-                logging.info(st.session_state["generated"])
-            except Exception as exc:
-                st.session_state.generated.append(NO_ANSWER_MSG)
-                logging.error(exc)
-
-    if st.session_state["generated"]:
         with col1:
-            for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-                if (i >= 0) and (st.session_state["generated"][i] != NO_ANSWER_MSG):
-                    message(
-                        st.session_state["generated"][i]["result"],
-                        key=str(i),
-                        is_user=False,
-                        avatar_style="icons",
-                        seed="459",
-                    )
-                    message(
-                        st.session_state["past"][i],
-                        is_user=True,
-                        key=str(i) + "_user",
-                        avatar_style="icons",
-                        seed="158",
-                    )
-                else:
-                    message(
-                        NO_ANSWER_MSG,
-                        key=str(i),
-                        is_user=False,
-                        avatar_style="icons",
-                        seed="459",
-                    )
-                    message(
-                        st.session_state["past"][i],
-                        is_user=True,
-                        key=str(i) + "_user",
-                        avatar_style="icons",
-                        seed="158",
+            with st.container():
+                st.markdown("## Natural Language Query (NLQ) Demonstration")
+                st.markdown(
+                    "##### Ask questions about The Museum of Modern Art (MoMA) Collection using natural language."
+                )
+                with st.expander("Click here for sample questions..."):
+                    st.markdown(
+                        """
+                        * How many artists are there in the collection?
+                        * How many pieces of artwork are there in the collection?
+                        * How many artists are there whose nationality is Italian?
+                        * How many artworks are by the artist Claude Monet?
+                        * How many artworks are classified as paintings?
+                        * How many artworks were created by Spanish artists?
+                        * How many artist names start with the letter 'M'?
+                        ---
+                        * How many artists are deceased as a percentage of all artists?
+                        * Who is the most prolific artist in the collection? What is their nationality?
+                        * What nationality of artists created the most artworks in the collection?
+                        * What is the ratio of male to female artists? Return as a ratio.
+                        * How many artworks were produced during the First World War, which are classified as paintings?
+                        * What are the five oldest artworks in the collection? Return the title and date for each.
+                        * Return the artwork for Frida Kahlo in a numbered list, including the title and date.
+                        * What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
+                        * What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
+                        ---
+                        * Give me a recipe for chocolate cake.
+                        * Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
+                    """
                     )
 
-    position = len(st.session_state["generated"]) - 1
-    with st.sidebar:
-        if (position >= 0) and (
-            st.session_state["generated"][position] != NO_ANSWER_MSG
-        ):
-            st.markdown("OpenAI Model:")
-            st.code(MODEL_NAME, language="text")
-            st.markdown("Question:")
-            st.code(st.session_state["generated"][position]["query"], language="text")
-            st.markdown("SQL Query:")
-            st.code(
-                st.session_state["generated"][position]["intermediate_steps"][1],
-                language="sql",
+            with st.container():
+                input_text = st.text_input(
+                    "Ask a question:",
+                    "",
+                    key="query_text",
+                    placeholder="Your question here...",
+                    on_change=clear_text(),
+                )
+                logging.info(input_text)
+
+                user_input = st.session_state["query"]
+
+                if user_input:
+                    with st.spinner(text="In progress..."):
+                        st.session_state.past.append(user_input)
+                        try:
+                            output = sql_db_chain(user_input)
+                            st.session_state.generated.append(output)
+                            logging.info(st.session_state["query"])
+                            logging.info(st.session_state["generated"])
+                        except Exception as exc:
+                            st.session_state.generated.append(NO_ANSWER_MSG)
+                            logging.error(exc)
+
+                if st.session_state["generated"]:
+                    with col1:
+                        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+                            if (i >= 0) and (
+                                st.session_state["generated"][i] != NO_ANSWER_MSG
+                            ):
+                                with st.chat_message(
+                                    "assistant", avatar="app/static/bot-64px.png"
+                                ):
+                                    st.write(st.session_state["generated"][i]["result"])
+                                with st.chat_message("user", avatar="app/static/man-64px.png"):
+                                    st.write(st.session_state["past"][i])
+                            else:
+                                with st.chat_message(
+                                    "assistant", avatar="app/static/bot-64px.png"
+                                ):
+                                    st.write(NO_ANSWER_MSG)
+                                with st.chat_message("user", avatar="app/static/man-64px.png"):
+                                    st.write(st.session_state["past"][i])
+        with col2:
+            with st.container():
+                st.button("clear chat", on_click=clear_session)
+
+    with tab2:
+        with st.container():
+            st.markdown("# Under the Hood")
+
+            position = len(st.session_state["generated"]) - 1
+            if (position >= 0) and (
+                st.session_state["generated"][position] != NO_ANSWER_MSG
+            ):
+                st.markdown("OpenAI Model:")
+                st.code(MODEL_NAME, language="text")
+
+                st.markdown("Question:")
+                st.code(
+                    st.session_state["generated"][position]["query"], language="text"
+                )
+
+                st.markdown("SQL Query:")
+                st.code(
+                    st.session_state["generated"][position]["intermediate_steps"][1],
+                    language="sql",
+                )
+
+                st.markdown("Results:")
+                st.code(
+                    st.session_state["generated"][position]["intermediate_steps"][3],
+                    language="python",
+                )
+
+                st.markdown("Answer:")
+                st.code(
+                    st.session_state["generated"][position]["result"], language="text"
+                )
+
+                data = ast.literal_eval(
+                    st.session_state["generated"][position]["intermediate_steps"][3]
+                )
+                df = None
+                if len(data[0]) == 2:
+                    st.markdown("Table:")
+                    df = pd.DataFrame(data, columns=["Category", "Metric"])
+                    df = df.astype({"Metric": "str"})
+                    df.sort_values(by=["Metric"])
+                    df
+
+                if len(data[0]) == 2:
+                    # ax = df.plot.bar()
+                    # st.bar_chart(data=df, x='Category', y='Count', use_container_width=True)
+
+                    st.markdown("Chart:")
+                    df = df.astype({"Metric": "Int64"})
+                    chart = (
+                        alt.Chart(df)
+                        .mark_bar()
+                        .encode(
+                            x=alt.X("Category", sort=None),
+                            y="Metric",
+                        )
+                        .interactive()
+                    )
+                    st.altair_chart(chart, theme="streamlit", use_container_width=True)
+            else:
+                st.markdown("Nothing to see here...")
+        with st.container():
+            st.markdown("""---""")
+            st.markdown(
+                "![](app/static/github-24px-wht.png) [Submit feature request or bug report](https://github.com/aws-solutions-library-samples/guidance-for-natural-language-queries-of-relational-databases-on-aws/issues)"
             )
-            st.markdown("Results:")
-            st.code(
-                st.session_state["generated"][position]["intermediate_steps"][3],
-                language="python",
+            st.markdown(
+                "![](app/static/github-24px-wht.png) [Source code](https://github.com/aws-solutions-library-samples/guidance-for-natural-language-queries-of-relational-databases-on-aws)"
             )
-            st.markdown("Answer:")
-            st.code(st.session_state["generated"][position]["result"], language="text")
-        else:
-            st.markdown("Nothing to see here...")
 
 
 def set_openai_api_key(region_name):
@@ -255,64 +341,9 @@ def load_few_shot_chain(llm, db, examples):
     )
 
 
-def get_text(col1):
-    with col1:
-        input_text = st.text_input(
-            "Ask a question:",
-            "",
-            key="query_text",
-            placeholder="Your question here...",
-            on_change=clear_text(),
-        )
-        logging.info(input_text)
-
-
 def clear_text():
     st.session_state["query"] = st.session_state["query_text"]
     st.session_state["query_text"] = ""
-
-
-def build_sidebar():
-    with st.sidebar:
-        with st.container():
-            st.markdown("# Under the Hood")
-
-
-def build_form(col1, col2):
-    with col1:
-        with st.container():
-            st.markdown("## Natural Language Query (NLQ) Demonstration")
-            st.markdown(
-                "Ask questions about The Museum of Modern Art (MoMA) Collection using natural language."
-            )
-
-        with st.container():
-            with st.expander("Click here for sample questions..."):
-                st.text(
-                    """
-                How many artists are there in the collection?
-                How many pieces of artwork are there in the collection?
-                How many artists are there whose nationality is Italian?
-                How many artworks are by the artist Claude Monet?
-                How many artworks are classified as paintings?
-                How many artworks were created by Spanish artists?
-                How many artist names start with the letter 'M'?
-                ---
-                How many artists are deceased as a percentage of all artists?
-                Who is the most prolific artist in the collection? What is their nationality?
-                What nationality of artists created the most artworks in the collection?
-                What is the ratio of male to female artists? Return as a ratio.
-                How many artworks were produced during the First World War, which are classified as paintings?
-                What are the five oldest artworks in the collection? Return the title and date for each.
-                Return the artwork for Frida Kahlo in a numbered list, including the title and date.
-                What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
-                ---
-                Give me a recipe for chocolate cake.
-                """
-                )
-    with col2:
-        with st.container():
-            st.button("clear chat", on_click=clear_session)
 
 
 def clear_session():
