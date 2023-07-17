@@ -4,7 +4,6 @@
 
 FROM python:3.11.4-slim
 
-# http://docs.projectatomic.io/ #labels
 LABEL name="nlq-genai" \
     version="1.0.0-sm" \
     maintainer="Gary A. Stafford (garystaf@amazon.com)"
@@ -37,19 +36,23 @@ RUN set -ex \
 WORKDIR /home/appuser/
 
 # copy required files to image
+COPY --chown=appuser:appgroup static static
 COPY --chown=appuser:appgroup moma_examples.yaml .
-COPY --chown=appuser:appgroup app_sagemaker.py app.py
+COPY --chown=appuser:appgroup app_sagemaker.py streamlit_app.py
 
-# CIS-DI-0006
-HEALTHCHECK --interval=5m --timeout=3s \
-    CMD curl -f http://localhost:8501/healthz || exit 1
+# set streamlit config via env vars
+ENV STREAMLIT_SERVER_ENABLE_STATIC_SERVING=true
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_LOGGER_LEVEL="info"
+ENV STREAMLIT_CLIENT_TOOLBAR_MODE="viewer"
+ENV STREAMLIT_CLIENT_SHOW_ERROR_DETAILS=false
+ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+ENV STREAMLIT_THEME_BASE="light"
+ENV STREAMLIT_THEME_PRIMARY_COLOR="#3383f6"
 
 EXPOSE 8501
 
-CMD [ "streamlit", "run", "app.py", "--server.port", "8501", "--theme.base", \
-    "dark", "--logger.level", "info", "--client.showErrorDetails", "false", \
-    "--client.toolbarMode", "viewer", "--browser.gatherUsageStats", "false" \
-    ]
+CMD [ "streamlit", "run", "streamlit_app.py"]
 
-# Set the user to run the application
+# set the user to run the application
 USER appuser
