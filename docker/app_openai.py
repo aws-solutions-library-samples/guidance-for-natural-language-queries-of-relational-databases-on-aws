@@ -122,7 +122,7 @@ def main():
                         * What are the 10 most prolific artists? Return their name and count of artwork.
                         * Return the artwork for Frida Kahlo in a numbered list, including the title and date.
                         * What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
-                        * What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
+                        * What are the 12 artworks by different Western European artists born before 1900? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
                         ---
                         * Give me a recipe for chocolate cake.
                         * Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
@@ -220,7 +220,7 @@ def main():
                     st.session_state["generated"][position]["intermediate_steps"][3]
                 )
                 df = None
-                if len(data[0]) == 2:
+                if len(data) > 0 and len(data[0]) == 2:
                     st.markdown("Table (Pandas DataFrame):")
                     df = pd.DataFrame(data, columns=["Category", "Metric"])
                     df = df.astype({"Metric": "str"})
