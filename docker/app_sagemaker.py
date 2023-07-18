@@ -194,13 +194,13 @@ def main():
     with tab2:
         with st.container():
             st.markdown("### Details")
+            st.markdown("SageMaker JumpStart Foundation Model Endpoint:")
+            st.code(ENDPOINT_NAME, language="text")
+
             position = len(st.session_state["generated"]) - 1
             if (position >= 0) and (
                 st.session_state["generated"][position] != NO_ANSWER_MSG
             ):
-                st.markdown("SageMaker JumpStart Foundation Model Endpoint:")
-                st.code(ENDPOINT_NAME, language="text")
-
                 st.markdown("Question:")
                 st.code(
                     st.session_state["generated"][position]["query"], language="text"
@@ -223,18 +223,14 @@ def main():
                     st.session_state["generated"][position]["result"], language="text"
                 )
 
-                data = ast.literal_eval(
-                    st.session_state["generated"][position]["intermediate_steps"][3]
-                )
-                df = None
-                if len(data) > 0 and len(data[0]) == 2:
-                    st.markdown("Table (Pandas DataFrame):")
-                    df = pd.DataFrame(data, columns=["Category", "Metric"])
-                    df = df.astype({"Metric": "str"})
-                    df.sort_values(by=["Metric"])
+                if len(data) > 0 and len(data[0]) > 1:
+                    data = ast.literal_eval(
+                        st.session_state["generated"][position]["intermediate_steps"][3]
+                    )
+                    df = None
+                    st.markdown("Pandas DataFrame:")
+                    df = pd.DataFrame(data)
                     df
-            else:
-                st.markdown("Nothing to see here...")
     with tab3:
         with st.container():
             st.markdown("### Technologies")
