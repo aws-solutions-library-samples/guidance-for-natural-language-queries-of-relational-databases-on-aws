@@ -30,24 +30,31 @@ Transitioning from the solution's Amazon SageMaker JumpStart Foundation Models t
 
 This solution uses an optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection. The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported into the Amazon RDS for PostgreSQL database instance.
 
-Using the MoMA dataset, we can ask natural language questions, like:
+Using the MoMA dataset, we can ask natural language questions, with varying levels of complexity:
 
-- How many artists are there in the collection?
-- How many pieces of artwork are there in the collection?
-- How many artists are there whose nationality is Italian?
-- How many artworks are by the artist Claude Monet?
-- How many artworks are classified as paintings?
-- How many artworks were created by Spanish artists?
-- How many artist names start with the letter 'M'?
-- How many artists are deceased as a percentage of all artists?
-- Who is the most prolific artist in the collection? What is their nationality?
-- What nationality of artists created the most artworks in the collection?
-- What is the ratio of male to female artists? Return as a ratio.
-- How many artworks were produced during the First World War, which are classified as paintings?
-- What are the five oldest artworks in the collection? Return the title and date for each.
-- Return the artwork for Frida Kahlo in a numbered list, including the title and date.
-- What are the ten artworks by European artist, with a data? Write Python code to output them with Matplotlib as a table. Include a header row and font size of 12.
-- Give me a recipe for chocolate cake.
+- Simple
+	- How many artists are there in the collection?
+	- How many pieces of artwork are there?
+	- How many artists are there whose nationality is Italian?
+	- How many artworks are by the artist Claude Monet?
+	- How many artworks are classified as paintings?
+	- How many artworks were created by Spanish artists?
+	- How many artist names start with the letter 'M'?
+- Moderate
+	- How many artists are deceased as a percentage of all artists?
+	- Who is the most prolific artist? What is their nationality?
+	- What nationality of artists created the most artworks?
+	- What is the ratio of male to female artists? Return as a ratio.
+- Complex
+	- How many artworks were produced during the First World War, which are classified as paintings?
+	- What are the five oldest pieces of artwork? Return the title and date for each.
+	- What are the 10 most prolific artists? Return their name and count of artwork.
+	- Return the artwork for Frida Kahlo in a numbered list, including the title and date.
+	- What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
+	- What are the 12 artworks by different Western European artists born before 1900? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
+- Unrelated to the Dataset
+	- Give me a recipe for chocolate cake.
+	- Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
 
 Again, the ability of the NLQ Application to return an answer and return an accurate answer, is primarily dependent on the choice of model. Not all models are capable of NLQ, while others will not return accurate answers.
 

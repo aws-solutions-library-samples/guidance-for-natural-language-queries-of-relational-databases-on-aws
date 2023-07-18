@@ -112,7 +112,7 @@ def main():
                     st.markdown(
                         """
                         * How many artists are there in the collection?
-                        * How many pieces of artwork are there in the collection?
+                        * How many pieces of artwork are there?
                         * How many artists are there whose nationality is Italian?
                         * How many artworks are by the artist Claude Monet?
                         * How many artworks are classified as paintings?
@@ -123,9 +123,9 @@ def main():
                         * Who is the most prolific artist? What is their nationality?
                         * What nationality of artists created the most artworks?
                         * What is the ratio of male to female artists? Return as a ratio.
-                        * How many artworks were produced during the First World War, which are classified as paintings?
                         ---
-                        * What are the five oldest? Return the title and date for each.
+                        * How many artworks were produced during the First World War, which are classified as paintings?
+                        * What are the five oldest pieces of artwork? Return the title and date for each.
                         * What are the 10 most prolific artists? Return their name and count of artwork.
                         * Return the artwork for Frida Kahlo in a numbered list, including the title and date.
                         * What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
