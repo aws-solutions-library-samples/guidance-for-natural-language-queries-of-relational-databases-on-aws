@@ -1,6 +1,6 @@
 ## Guidance for Natural Language Queries (NLQ) of Relational Databases on AWS
 
-This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, OpenAI's Generative Pre-trained Transformer (GPT) models API. The demonstration's web-based application, running on Amazon ECS on AWS Fargate, uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) open-source embedding database, and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to create sentence embeddings. The application accepts natural language questions from an end-users and returns natural language answers, along with the associated SQL query and Pandas-compatible result set.
+This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, third-party provider's models via their APIs. The demonstration's web-based application, running on Amazon ECS on AWS Fargate, uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) open-source embedding database, and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to create sentence embeddings. The application accepts natural language questions from an end-users and returns natural language answers, along with the associated SQL query and Pandas DataFrame-compatible result set.
 
 #### NLQ Application Chatbot Tab
 
@@ -12,49 +12,49 @@ This AWS Solution contains a demonstration of Generative AI, specifically, the u
 
 ## Foundation Model Choice and Accuracy of NLQ
 
-The selection of the Foundation Model (FM) for Natural Language Query (NLQ) plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs possess NLQ capabilities. In addition to model choice, accuracy also relies heavily on factors such as the quality of the prompt, prompt-template, and labeled sample queries used for in-context learning (aka few-shot prompting).
+The selection of the Foundation Model (FM) for Natural Language Query (NLQ) plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs are capable of performing NLQ. In addition to model choice, NLQ accuracy also relies heavily on factors, such as the quality of the prompt, prompt template, labeled sample queries used for in-context learning (_aka few-shot prompting_), and the naming conventions used for your database schema (tables and columns).
 
-The NLQ Application was tested on a large variety of FMs. OpenAI's GPT-3 series `gpt-3.5-turbo` model is capable of accurately answering all sample questions included in the application's web-based UI. OpenAI GPT-3 and GPT-4 series models, like `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4` are considered current state-of-the-art for NLQ, providing highly accurate responses to a wide range of complex NLQ questions with minimal in-context learning or additional prompt engineering.
+The NLQ Application was tested on a large variety of open source and commercial FMs. As a baseline, OpenAI's GPT-3 series `gpt-3.5-turbo` model was capable of accurately answering all sample questions included in this README file and the NLQ Application's web UI. OpenAI's Generative Pre-trained Transformer GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`, provide highly accurate responses to a wide range of complex natural language queries with minimal in-context learning or additional prompt engineering.
 
-NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. It is important to note that while the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` model may fail to return an answer, provide incorrect answers, or cause the JumpStart Foundation Model endpoint to experience lengthy timeouts when faced with even moderately complex questions. Users are encouraged to test a variety of JumpStart Foundation Models for best results.
+Open source NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient in-context learning, but will fail to return an answer, provide incorrect answers, or cause the model endpoint to experience timeouts when faced with moderate to complex questions. Users are encouraged to experiment with a variety of open source and commercial JumpStart Foundation Models for best results.
 
 ### Optional: Switching Foundation Models
 
-You can also replace the default `google/flan-t5-xxl-fp16` JumpStart Foundation Model inference endpoint, deployed using the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the model parameters in the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you may need to make adjustments to the `app_sagemaker.py` file, modifying the `ContentHandler` Class to match the response payload of the chosen model. Then, rebuild the Amazon ECR Docker Image, incrementing the version, `nlq-genai-1.0.1-sm`, using the `Dockerfile_SageMaker` Dockerfile and push to the Amazon ECR repository. Lastly, you will need to update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker` CloudFormation stack.
+You can replace the default `google/flan-t5-xxl-fp16` JumpStart Foundation Model, deployed using the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will first need to modify the model parameters in the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`. Additionally, you may need to make adjustments to the NLQ Application, the `app_sagemaker.py` file, modifying the `ContentHandler` Class to match the response payload of the chosen model. Then, rebuild the Amazon ECR Docker Image, incrementing the version, e.g., `nlq-genai-1.0.1-sm`, using the `Dockerfile_SageMaker` Dockerfile and push to the Amazon ECR repository. Lastly, you will need to update the deployed ECS task and service, which are part of the `NlqEcsStackSageMaker` CloudFormation stack.
 
-### Optional: Switching to OpenAI
+### Optional: Switching to a Third-party Model Provider's API
 
-Transitioning from the solution's Amazon SageMaker JumpStart Foundation Models to OpenAI's models via their API is designed to easy. Using a third-party model via an API eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. To use OpenAI's API, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push the resulting image, `nlq-genai-1.0.0-oai`, to the Amazon ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. To utilize OpenAI's models, you will first need to create an OpenAI account and obtain your own personal secret API key.
+Switching from the solution's default Amazon SageMaker JumpStart Foundation Model to third-party model provider's API, such as OpenAI, Cohere, and Anthropic is straightforward. To utilize OpenAI's models, you will first need to create an OpenAI account and obtain your own personal API key. Using a third-party model via an API eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be deleted. Next, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push the resulting image, e.g., `nlq-genai-1.0.0-oai`, to the Amazon ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation template file. This stack replaces the the `NlqEcsStackSageMaker` CloudFormation stack, designed for use JumpStart Foundation Models.
 
 ## Sample Dataset
 
-This solution uses an optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection. The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported into the Amazon RDS for PostgreSQL database instance.
+This solution uses an NLQ-optimized copy of the open-source database, The Museum of Modern Art (MoMA) Collection, available on [GitHub](https://github.com/MuseumofModernArt/collection). The MoMA database contains over 121,000 pieces of artwork and 15,000 artists. This project repository contains pipe-delimited text files that can be easily imported into the Amazon RDS for PostgreSQL database instance.
 
 Using the MoMA dataset, we can ask natural language questions, with varying levels of complexity:
 
 - Simple
-	- How many artists are there in the collection?
-	- How many pieces of artwork are there?
-	- How many artists are there whose nationality is Italian?
-	- How many artworks are by the artist Claude Monet?
-	- How many artworks are classified as paintings?
-	- How many artworks were created by Spanish artists?
-	- How many artist names start with the letter 'M'?
+  - How many artists are there in the collection?
+  - How many pieces of artwork are there?
+  - How many artists are there whose nationality is Italian?
+  - How many artworks are by the artist Claude Monet?
+  - How many artworks are classified as paintings?
+  - How many artworks were created by Spanish artists?
+  - How many artist names start with the letter 'M'?
 - Moderate
-	- How many artists are deceased as a percentage of all artists?
-	- Who is the most prolific artist? What is their nationality?
-	- What nationality of artists created the most artworks?
-	- What is the ratio of male to female artists? Return as a ratio.
+  - How many artists are deceased as a percentage of all artists?
+  - Who is the most prolific artist? What is their nationality?
+  - What nationality of artists created the most artworks?
+  - What is the ratio of male to female artists? Return as a ratio.
 - Complex
-	- How many artworks were produced during the First World War, which are classified as paintings?
-	- What are the five oldest pieces of artwork? Return the title and date for each.
-	- What are the 10 most prolific artists? Return their name and count of artwork.
-	- Return the artwork for Frida Kahlo in a numbered list, including the title and date.
-	- What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
-	- What are the 12 artworks by different Western European artists born before 1900? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
+  - How many artworks were produced during the First World War, which are classified as paintings?
+  - What are the five oldest pieces of artwork? Return the title and date for each.
+  - What are the 10 most prolific artists? Return their name and count of artwork.
+  - Return the artwork for Frida Kahlo in a numbered list, including the title and date.
+  - What is the count of artworks by classification? Return the first ten in descending order. Don't include Not_Assigned.
+  - What are the 12 artworks by different Western European artists born before 1900? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
 - Unrelated to the Dataset
-	- Give me a recipe for chocolate cake.
-	- Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
+  - Give me a recipe for chocolate cake.
+  - Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
 
 Again, the ability of the NLQ Application to return an answer and return an accurate answer, is primarily dependent on the choice of model. Not all models are capable of NLQ, while others will not return accurate answers.
 
