@@ -1,4 +1,4 @@
-## Guidance for Natural Language Queries (NLQ) of Relational Databases on AWS
+## Guidance for Natural Language Queries of Relational Databases on AWS
 
 This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution uses Amazon SageMaker JumpStart Foundation Models, or optionally, third-party provider's models via their APIs. The demonstration's web-based application, running on Amazon ECS on AWS Fargate, uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) open-source embedding database, and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to create sentence embeddings. The application accepts natural language questions from an end-users and returns natural language answers, along with the associated SQL query and Pandas DataFrame-compatible result set.
 
