@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: "(SO9250) Guidance for Natural Language Queries of Relational Databases on AWS - Main stack template."
+Description: "SO9250 Guidance for Natural Language Queries of Relational Databases on AWS - Main stack template."
 Parameters:
   VpcCIDR:
     Description: The IP range (CIDR notation) for this VPC
@@ -47,7 +47,7 @@ Parameters:
 
   ProjectTagValue:
     Type: String
-    Default: "(SO9250) Guidance for Natural Language Queries of Relational Databases on AWS"
+    Default: "SO9250 Guidance for Natural Language Queries of Relational Databases on AWS"
     Description: The Project Tag value applied to all resources.
 
 Resources:
