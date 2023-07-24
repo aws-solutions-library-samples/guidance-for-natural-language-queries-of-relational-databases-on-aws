@@ -17,22 +17,21 @@ import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain import (
-    FewShotPromptTemplate,
-    PromptTemplate,
-    SQLDatabase,
-    SQLDatabaseChain,
-)
-from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
+from langchain import (FewShotPromptTemplate, PromptTemplate, SQLDatabase,
+                       SQLDatabaseChain)
+from langchain.chains.sql_database.prompt import (PROMPT_SUFFIX,
+                                                  _postgres_prompt)
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.prompts.example_selector.semantic_similarity import (
-    SemanticSimilarityExampleSelector,
-)
+from langchain.prompts.example_selector.semantic_similarity import \
+    SemanticSimilarityExampleSelector
 from langchain.vectorstores import Chroma
 
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+BASE_AVATAR_URL = (
+    "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
+)
 
 
 def main():
@@ -163,23 +162,23 @@ def main():
                             ):
                                 with st.chat_message(
                                     "assistant",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
                                     "user",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
                                     "assistant",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
                                     "user",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:

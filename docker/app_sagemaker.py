@@ -32,6 +32,9 @@ from langchain.vectorstores import Chroma
 
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
 ENDPOINT_NAME = os.environ.get("ENDPOINT_NAME")
+BASE_AVATAR_URL = (
+    "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
+)
 
 
 def main():
@@ -170,23 +173,23 @@ def main():
                             ):
                                 with st.chat_message(
                                     "assistant",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
                                     "user",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
                                     "assistant",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/bot-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
                                     "user",
-                                    avatar="https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static/human-64px.png",
+                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:
@@ -223,7 +226,7 @@ def main():
                 st.code(
                     st.session_state["generated"][position]["result"], language="text"
                 )
-                
+
                 data = ast.literal_eval(
                     st.session_state["generated"][position]["intermediate_steps"][3]
                 )
@@ -284,13 +287,6 @@ def main():
             """
             )
             st.markdown(" ")
-
-            st.markdown("##### OpenAI API")
-            st.markdown(
-                """
-            The [OpenAI API](https://platform.openai.com/docs/introduction), optional for this solution, can be applied to virtually any task that requires understanding or generating natural language and code. OpenAI offer a range of models with different capabilities, including the ability to fine-tune custom models.
-            """
-            )
 
         with st.container():
             st.markdown("""---""")
@@ -379,7 +375,7 @@ def load_few_shot_chain(llm, db, examples):
         llm,
         db,
         prompt=few_shot_prompt,
-        use_query_checker=True, # must be True for flan-t5 model
+        use_query_checker=True,  # must be True for flan-t5 model
         verbose=True,
         return_intermediate_steps=True,
     )
