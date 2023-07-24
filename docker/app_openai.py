@@ -217,10 +217,10 @@ def main():
                     st.session_state["generated"][position]["result"], language="text"
                 )
 
+                data = ast.literal_eval(
+                    st.session_state["generated"][position]["intermediate_steps"][3]
+                )
                 if len(data) > 0 and len(data[0]) > 1:
-                    data = ast.literal_eval(
-                        st.session_state["generated"][position]["intermediate_steps"][3]
-                    )
                     df = None
                     st.markdown("Pandas DataFrame:")
                     df = pd.DataFrame(data)

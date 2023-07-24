@@ -223,11 +223,11 @@ def main():
                 st.code(
                     st.session_state["generated"][position]["result"], language="text"
                 )
-
+                
+                data = ast.literal_eval(
+                    st.session_state["generated"][position]["intermediate_steps"][3]
+                )
                 if len(data) > 0 and len(data[0]) > 1:
-                    data = ast.literal_eval(
-                        st.session_state["generated"][position]["intermediate_steps"][3]
-                    )
                     df = None
                     st.markdown("Pandas DataFrame:")
                     df = pd.DataFrame(data)
@@ -379,7 +379,7 @@ def load_few_shot_chain(llm, db, examples):
         llm,
         db,
         prompt=few_shot_prompt,
-        use_query_checker=False,  # must be False for OpenAI model
+        use_query_checker=True, # must be True for flan-t5 model
         verbose=True,
         return_intermediate_steps=True,
     )
