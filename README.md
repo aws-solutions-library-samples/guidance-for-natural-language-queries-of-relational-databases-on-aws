@@ -12,11 +12,11 @@ This AWS Solution contains a demonstration of Generative AI, specifically, the u
 
 ## Foundation Model Choice and Accuracy of NLQ
 
-The selection of the Foundation Model (FM) for Natural Language Query (NLQ) plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers; not all FMs are capable of performing NLQ. In addition to model choice, NLQ accuracy also relies heavily on factors, such as the quality of the prompt, prompt template, labeled sample queries used for in-context learning (_aka few-shot prompting_), and the naming conventions used for your database schema (tables and columns).
+The selection of the Foundation Model (FM) for Natural Language Query (NLQ) plays a crucial role in the application's ability to accurately translate natural language questions into natural language answers. Not all FMs are capable of performing NLQ. In addition to model choice, NLQ accuracy also relies heavily on factors such as the quality of the prompt, prompt template, labeled sample queries used for in-context learning (_aka few-shot prompting_), and the naming conventions used for your database schema (tables and columns).
 
-The NLQ Application was tested on a large variety of open source and commercial FMs. As a baseline, OpenAI's GPT-3 series `gpt-3.5-turbo` model was capable of accurately answering all sample questions included in this README file and the NLQ Application's web UI. OpenAI's Generative Pre-trained Transformer GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and the latest addition, `gpt-4`, provide highly accurate responses to a wide range of complex natural language queries with minimal in-context learning or additional prompt engineering.
+The NLQ Application was tested on a large variety of open source and commercial FMs. As a baseline, OpenAI's GPT-3 series `gpt-3.5-turbo` model was capable of accurately answering all sample questions included in this README file and the NLQ Application's web UI. OpenAI's Generative Pre-trained Transformer GPT-3 and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and `gpt-4`, provide accurate responses to a wide range of complex natural language queries with minimal in-context learning or additional prompt engineering.
 
-Open source NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16`, are available through Amazon SageMaker JumpStart Foundation Models. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient in-context learning, but will fail to return an answer, provide incorrect answers, or cause the model endpoint to experience timeouts when faced with moderate to complex questions. Users are encouraged to experiment with a variety of open source and commercial JumpStart Foundation Models for best results.
+Open source NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` (half-precision floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart Foundation Models. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their capabilities for NLQ are limited compared to other commercial models. The demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient in-context learning, but will fail to return an answer, provide incorrect answers, or cause the model endpoint to experience timeouts due to resource exhaustion when faced with moderate to complex questions. Users are encouraged to experiment with a variety of open source and commercial JumpStart Foundation Models, and Amazon Bedrock when available, for best results.
 
 ### Optional: Switching Foundation Models
 
@@ -69,7 +69,7 @@ Again, the ability of the NLQ Application to return an answer and return an accu
 7. Deploy the `NlqSageMakerEndpointStack` CloudFormation template, using the Amazon SageMaker JumpStart Foundation Models option.
 8. If you use Option 1: SageMaker JumpStart FM Endpoint, deploy the `NlqEcsSageMakerStack` CloudFormation template. Alternately, deploy the `NlqOpenAIStack` CloudFormation template for use with Option 2: OpenAI API.
 
-### 2. Create AWS Secret Manager Secrets
+### Step 2: Create AWS Secret Manager Secrets
 
 Make sure you update the secret values before continuing.
 
@@ -96,7 +96,7 @@ aws secretsmanager create-secret \
     --secret-string "<your_openai_api_key"
 ```
 
-### 3. Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
+### Step 3: Deploy the Main NLQ Stack: Networking, Security, RDS Instance, and ECR Repository
 
 ```sh
 cd cloudformation/
@@ -108,7 +108,7 @@ aws cloudformation create-stack \
   --parameters ParameterKey="MyIpAddress",ParameterValue=$(curl -s http://checkip.amazonaws.com/)/32
 ```
 
-### 4. Build and Push the Docker Image to ECR
+### Step 4: Build and Push the Docker Image to ECR
 
 You can build the image locally, in a CI/CD pipeline, using SageMaker Notebook environment, or AWS Cloud9.
 
@@ -140,11 +140,11 @@ docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
 
-### 5. Import Sample Data and Configure the MoMA Database
+### Step 5: Import Sample Data and Configure the MoMA Database
 
-1. Connect to the `moma` database using your preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
+A. Connect to the `moma` database using your preferred PostgreSQL tool. You may need to enable `Public access` for the RDS instance temporarily depending on how you connect to the database.
 
-2. Create the two MoMA collection tables into the `moma` database.
+B. Create the two MoMA collection tables into the `moma` database.
 
 ```sql
 CREATE TABLE public.artists (
@@ -182,7 +182,7 @@ CREATE TABLE public.artworks (
 )
 ```
 
-3. Unzip and import the two data files into the `moma` database using the text files in the `/data` sub-directory. The both files contain a header row and pipe-delimited ('|').
+C. Unzip and import the two data files into the `moma` database using the text files in the `/data` sub-directory. The both files contain a header row and pipe-delimited ('|').
 
 ```txt
 # examples commands from pgAdmin4
@@ -191,7 +191,7 @@ CREATE TABLE public.artworks (
 --command " "\\copy public.artworks (artwork_id, title, artist_id, date, medium, dimensions, acquisition_date, credit, catalogue, department, classification, object_number, diameter_cm, circumference_cm, height_cm, length_cm, width_cm, depth_cm, weight_kg, durations) FROM 'moma_public_artworks.txt' DELIMITER '|' CSV HEADER QUOTE '\"' ESCAPE '''';""
 ```
 
-### 6. Add NLQ Application to the MoMA Database
+### Step 6: Add NLQ Application to the MoMA Database
 
 Create the read-only NLQ Application database user account. Update the username and password you configured in step 2, with the secrets.
 
@@ -209,7 +209,7 @@ CREATE ROLE <your_nlqapp_username> WITH
 GRANT pg_read_all_data TO <your_nlqapp_username>;
 ```
 
-### 7. Deploy the ML Stack: Model, Endpoint
+### Step 7: Deploy the ML Stack: Model and Endpoint
 
 Option 1: SageMaker JumpStart FM Endpoint
 
@@ -222,7 +222,7 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### 8. Deploy the ECS Service Stack: Task, Service
+### Step 8: Deploy the ECS Service Stack: Task and Service
 
 Option 1: SageMaker JumpStart FM Endpoint
 
@@ -249,7 +249,3 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
-
-```
-
-```

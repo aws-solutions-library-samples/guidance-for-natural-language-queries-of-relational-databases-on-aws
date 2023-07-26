@@ -44,16 +44,6 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    # # hide the hamburger bar menu
-    # hide_streamlit_style = """
-    #     <style>
-    #     #MainMenu {visibility: hidden;}
-    #     footer {visibility: hidden;}
-    #     </style>
-
-    # """
-    # st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     NO_ANSWER_MSG = "Sorry, I was unable to answer your question."
@@ -117,11 +107,11 @@ def main():
                         - Simple
                             - How many artists are there in the collection?
                             - How many pieces of artwork are there?
-                            - How many artists are there whose nationality is Italian?
-                            - How many artworks are by the artist Claude Monet?
-                            - How many artworks are classified as paintings?
+                            - How many artworks are by the artist 'Claude Monet'?
+                            - How many distinct nationalities are there?
                             - How many artworks were created by Spanish artists?
                             - How many artist names start with the letter 'M'?
+                            - How many artists are there whose nationality is Italian?
                         - Moderate
                             - How many artists are deceased as a percentage of all artists?
                             - Who is the most prolific artist? What is their nationality?
