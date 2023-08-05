@@ -1,6 +1,6 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-07-17
+# Date: 2023-08-05
 # Application expects the following environment variables (adjust for your environment):
 # export ENDPOINT_NAME="hf-text2text-flan-t5-xxl-fp16"
 # export REGION_NAME="us-east-1"
@@ -16,12 +16,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain import (
-    FewShotPromptTemplate,
-    PromptTemplate,
-    SQLDatabase,
-    SQLDatabaseChain,
-)
+from langchain import FewShotPromptTemplate, PromptTemplate, SQLDatabase
 from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.llms.sagemaker_endpoint import LLMContentHandler, SagemakerEndpoint
@@ -29,6 +24,7 @@ from langchain.prompts.example_selector.semantic_similarity import (
     SemanticSimilarityExampleSelector,
 )
 from langchain.vectorstores import Chroma
+from langchain_experimental.sql import SQLDatabaseChain
 
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
 ENDPOINT_NAME = os.environ.get("ENDPOINT_NAME")
