@@ -1,12 +1,13 @@
-# package versions frozen and tested successfully 2023-07-23
-awscli==1.29.4
-boto3==1.28.4
-chromadb==0.4.0
-langchain==0.0.235
+# package versions frozen and tested successfully 2023-08-05
+awscli==1.29.20
+boto3==1.28.20
+chromadb==0.4.5
+langchain==0.0.252
+langchain-experimental==0.0.8
 openai==0.27.8
-psycopg2-binary==2.9.6
+psycopg2-binary==2.9.7
 python-dotenv==1.0.0
 PyYAML==6.0.1
 sentence-transformers==2.2.2
-SQLAlchemy==2.0.19
-streamlit==1.24.1
+SQLAlchemy>=2.0.19
+streamlit>=1.25.0
