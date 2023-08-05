@@ -62,7 +62,7 @@ Again, the ability of the NLQ Application to return an answer and return an accu
 
 1. If you use Option 1: SageMaker JumpStart FM Endpoint, make you have the required EC2 instance for the endpoint inference, or request it using Service Quotas in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model: https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B). Refer to the model's documentation for the choice of instance type.
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
-3. Deploy the `NlqMainStack` CloudFormation template.
+3. Deploy the `NlqMainStack` CloudFormation template. Please note, you will have needed to have used Amazon ECS at least one in your account, or the `AWSServiceRoleForECS` Service-Linked Role will not yet exist and the stack will fail. Check the `AWSServiceRoleForECS` Service-Linked Role before deploying the `NlqMainStack` stack. This role is auto-created the first time you create an ECS cluster in your account.
 4. If you use Option 1: SageMaker JumpStart FM Endpoint, build and push the `nlq-genai:1.0.0-sm` Docker image to the new Amazon ECR repository. Alternately, build and push the `nlq-genai:1.0.0-oai` Docker image for use with Option 2: OpenAI API.
 5. Import the included sample data into the Amazon RDS MoMA database.
 6. Add the `nlqapp` user to the MoMA database.
