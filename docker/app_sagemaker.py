@@ -17,13 +17,12 @@ import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
 from langchain import FewShotPromptTemplate, PromptTemplate, SQLDatabase
-from langchain.chains.sql_database.prompt import (PROMPT_SUFFIX,
-                                                  _postgres_prompt)
+from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.llms.sagemaker_endpoint import (LLMContentHandler,
-                                               SagemakerEndpoint)
-from langchain.prompts.example_selector.semantic_similarity import \
-    SemanticSimilarityExampleSelector
+from langchain.llms.sagemaker_endpoint import LLMContentHandler, SagemakerEndpoint
+from langchain.prompts.example_selector.semantic_similarity import (
+    SemanticSimilarityExampleSelector,
+)
 from langchain.vectorstores import Chroma
 from langchain_experimental.sql import SQLDatabaseChain
 
