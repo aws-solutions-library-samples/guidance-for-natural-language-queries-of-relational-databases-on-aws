@@ -1,6 +1,6 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-07-17
+# Date: 2023-08-05
 # Application expects the following environment variables (adjust for your environment):
 # export OPENAI_API_KEY="sk-<your_api_key>""
 # export REGION_NAME="us-east-1"
@@ -17,15 +17,15 @@ import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain import (FewShotPromptTemplate, PromptTemplate, SQLDatabase,
-                       SQLDatabaseChain)
-from langchain.chains.sql_database.prompt import (PROMPT_SUFFIX,
-                                                  _postgres_prompt)
+from langchain import FewShotPromptTemplate, PromptTemplate, SQLDatabase
+from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.prompts.example_selector.semantic_similarity import \
-    SemanticSimilarityExampleSelector
+from langchain.prompts.example_selector.semantic_similarity import (
+    SemanticSimilarityExampleSelector,
+)
 from langchain.vectorstores import Chroma
+from langchain_experimental.sql import SQLDatabaseChain
 
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
