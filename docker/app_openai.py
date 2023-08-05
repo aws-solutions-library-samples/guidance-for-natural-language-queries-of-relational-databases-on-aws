@@ -162,23 +162,23 @@ def main():
                             ):
                                 with st.chat_message(
                                     "assistant",
-                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
                                     "user",
-                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
                                     "assistant",
-                                    avatar=f"BASE_AVATAR_URL/bot-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
                                     "user",
-                                    avatar=f"BASE_AVATAR_URL/human-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:
