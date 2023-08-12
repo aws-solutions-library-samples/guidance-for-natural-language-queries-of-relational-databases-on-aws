@@ -495,6 +495,30 @@ Resources:
       SecurityGroupIds:
         - !GetAtt VPCEndpointSecurityGroup.GroupId
 
+  VPCEndpointBedrock:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.bedrock"
+      PolicyDocument: |
+        {
+          "Statement": [
+            {
+              "Action": "*", 
+              "Effect": "Allow", 
+              "Principal": "*", 
+              "Resource": "*"
+            }
+          ]
+        }
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VPCEndpointSecurityGroup.GroupId
+
   VPCEndpointS3GTW:
     Type: "AWS::EC2::VPCEndpoint"
     Properties:

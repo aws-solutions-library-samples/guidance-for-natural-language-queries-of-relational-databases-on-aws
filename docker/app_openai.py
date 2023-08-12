@@ -36,7 +36,8 @@ BASE_AVATAR_URL = (
 
 def main():
     st.set_page_config(
-        page_title="Natural Language Query (NLQ) Demo",
+        page_title="NLQ Demo",
+        page_icon="🔎",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
@@ -243,12 +244,10 @@ def main():
             [The Museum of Modern Art (MoMA) Collection](https://github.com/MuseumofModernArt/collection) contains over 120,000 pieces of artwork and 15,000 artists. The datasets are available on GitHub in CSV format, encoded in UTF-8. The datasets are also available in JSON. The datasets are provided to the public domain using a [CC0 License](https://creativecommons.org/publicdomain/zero/1.0/).
             """
             )
-            st.markdown(" ")
-
-            st.markdown("##### Amazon SageMaker JumpStart Foundation Models")
+            st.markdown("##### OpenAI API")
             st.markdown(
                 """
-            [Amazon SageMaker JumpStart Foundation Models](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models.html) offers state-of-the-art foundation models for use cases such as content writing, image and code generation, question answering, copywriting, summarization, classification, information retrieval, and more.
+            The [OpenAI API](https://platform.openai.com/docs/introduction), optional for this solution, can be applied to virtually any task that requires understanding or generating natural language and code. OpenAI offer a range of models with different capabilities, including the ability to fine-tune custom models.
             """
             )
             st.markdown(" ")
@@ -276,13 +275,6 @@ def main():
             """
             )
             st.markdown(" ")
-
-            st.markdown("##### OpenAI API")
-            st.markdown(
-                """
-            The [OpenAI API](https://platform.openai.com/docs/introduction), optional for this solution, can be applied to virtually any task that requires understanding or generating natural language and code. OpenAI offer a range of models with different capabilities, including the ability to fine-tune custom models.
-            """
-            )
 
         with st.container():
             st.markdown("""---""")
