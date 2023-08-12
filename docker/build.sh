@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# Build two Docker images for Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL:
+# Builds three Docker images for Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL:
 # 1/ Amazon SageMaker JumpStart Foundation Models
-# 2/ OpenAI's LLM models via their API
+# 2/ Amazon Bedrock
+# 3/ OpenAI's LLM models via their API
 # Author: Gary A. Stafford
 # Date: 2023-07-12
 # run: chmod a+rx build.sh
@@ -20,7 +21,12 @@ TAG="1.0.0-sm"
 docker build -f Dockerfile_SageMaker -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
-# Option 2: OpenAI API
+# Option 2: Amazon Bedrock
+TAG="1.0.1-bedrock"
+docker build -f Dockerfile_Bedrock -t $ECS_REPOSITORY:$TAG .
+docker push $ECS_REPOSITORY:$TAG
+
+# Option 3: OpenAI API
 TAG="1.0.0-oai"
 docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG

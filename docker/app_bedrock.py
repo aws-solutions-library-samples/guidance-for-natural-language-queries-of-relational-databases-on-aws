@@ -1,10 +1,7 @@
-# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and Amazon SageMaker JumpStart Foundation Models.
+# Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and Amazon Bedrock.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-08-05
-# Application expects the following environment variables (adjust for your environment):
-# export ENDPOINT_NAME="hf-text2text-flan-t5-xxl-fp16"
-# export REGION_NAME="us-east-1"
-# Usage: streamlit run app_sagemaker.py --server.runOnSave true
+# Date: 2023-08-12
+# Usage: streamlit run app_bedrock.py --server.runOnSave true
 
 import ast
 import json
@@ -19,18 +16,30 @@ from botocore.exceptions import ClientError
 from langchain import FewShotPromptTemplate, PromptTemplate, SQLDatabase
 from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.llms.sagemaker_endpoint import LLMContentHandler, SagemakerEndpoint
+from langchain.llms import Bedrock
 from langchain.prompts.example_selector.semantic_similarity import (
     SemanticSimilarityExampleSelector,
 )
 from langchain.vectorstores import Chroma
 from langchain_experimental.sql import SQLDatabaseChain
 
+# ***** CONFIGURABLE PARAMETERS *****
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
-ENDPOINT_NAME = os.environ.get("ENDPOINT_NAME")
+MODEL_NAME = os.environ.get("MODEL_NAME", "anthropic.claude-instant-v1")
+TEMPERATURE = os.environ.get("TEMPERATURE", 0.3)
+MAX_TOKENS_TO_SAMPLE = os.environ.get("MAX_TOKENS_TO_SAMPLE", 4096)
+TOP_K = os.environ.get("TOP_K", 250)
+TOP_P = os.environ.get("TOP_P", 1)
+STOP_SEQUENCES = os.environ.get("STOP_SEQUENCES", ["\n\nHuman"])
 BASE_AVATAR_URL = (
     "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
 )
+ASSISTANT_ICON = os.environ.get("ASSISTANT_ICON", "bot-64px.png")
+USER_ICON = os.environ.get("USER_ICON", "human-64px.png")
+HUGGING_FACE_EMBEDDINGS_MODEL = os.environ.get(
+    "HUGGING_FACE_EMBEDDINGS_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+)
+# ******************************************************************
 
 
 def main():
@@ -41,23 +50,33 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
+    # # hide the hamburger bar menu
+    # hide_streamlit_style = """
+    #     <style>
+    #     #MainMenu {visibility: hidden;}
+    #     footer {visibility: hidden;}
+    #     </style>
+
+    # """
+    # st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     NO_ANSWER_MSG = "Sorry, I was unable to answer your question."
 
-    # Amazon SageMaker JumpStart Endpoint
-    content_handler = ContentHandler()
-
     parameters = {
-        "max_length": 2048,
-        "temperature": 0.0,
+        "max_tokens_to_sample": MAX_TOKENS_TO_SAMPLE,
+        "temperature": TEMPERATURE,
+        "top_k": TOP_K,
+        "top_p": TOP_P,
+        "stop_sequences": STOP_SEQUENCES,
     }
 
-    llm = SagemakerEndpoint(
-        endpoint_name=ENDPOINT_NAME,
+    llm = Bedrock(
         region_name=REGION_NAME,
+        model_id=MODEL_NAME,
         model_kwargs=parameters,
-        content_handler=content_handler,
+        verbose=True,
     )
 
     # define datasource uri
@@ -104,11 +123,11 @@ def main():
                         - Simple
                             - How many artists are there in the collection?
                             - How many pieces of artwork are there?
-                            - How many artworks are by the artist 'Claude Monet'?
-                            - How many distinct nationalities are there?
+                            - How many artists are there whose nationality is Italian?
+                            - How many artworks are by the artist Claude Monet?
+                            - How many artworks are classified as paintings?
                             - How many artworks were created by Spanish artists?
                             - How many artist names start with the letter 'M'?
-                            - How many artists are there whose nationality is Italian?
                         - Moderate
                             - How many artists are deceased as a percentage of all artists?
                             - Who is the most prolific artist? What is their nationality?
@@ -123,7 +142,7 @@ def main():
                             - What are the 12 artworks by different Western European artists born before 1900? Write Python code to output them with Matplotlib as a table. Include header row and font size of 12.
                         - Unrelated to the Dataset
                             - Give me a recipe for chocolate cake.
-                            - Don't write a SQL query. Don't use the database. Tell me who won the 2022 FIFA World Cup final?
+                            - Who won the 2022 FIFA World Cup final?
                     """
                     )
                 st.markdown(" ")
@@ -140,7 +159,7 @@ def main():
                 user_input = st.session_state["query"]
 
                 if user_input:
-                    with st.spinner(text="In progress..."):
+                    with st.spinner(text="Thinking..."):
                         st.session_state.past.append(user_input)
                         try:
                             output = sql_db_chain(user_input)
@@ -160,23 +179,23 @@ def main():
                             ):
                                 with st.chat_message(
                                     "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
                                     "user",
-                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
                                     "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
                                     "user",
-                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
+                                    avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:
@@ -185,8 +204,8 @@ def main():
     with tab2:
         with st.container():
             st.markdown("### Details")
-            st.markdown("SageMaker JumpStart Foundation Model Endpoint:")
-            st.code(ENDPOINT_NAME, language="text")
+            st.markdown("Amazon Bedrock Model:")
+            st.code(MODEL_NAME, language="text")
 
             position = len(st.session_state["generated"]) - 1
             if (position >= 0) and (
@@ -243,13 +262,14 @@ def main():
             )
             st.markdown(" ")
 
-            st.markdown("##### Amazon SageMaker JumpStart Foundation Models")
+            st.markdown(" ")
+
+            st.markdown("##### Amazon Bedrock")
             st.markdown(
                 """
-            [Amazon SageMaker JumpStart Foundation Models](https://docs.aws.amazon.com/sagemaker/latest/dg/jumpstart-foundation-models.html) offers state-of-the-art foundation models for use cases such as content writing, image and code generation, question answering, copywriting, summarization, classification, information retrieval, and more.
+            [Amazon Bedrock](https://aws.amazon.com/bedrock/) is the easiest way to build and scale generative AI applications with foundation models (FMs).
             """
             )
-            st.markdown(" ")
 
             st.markdown("##### LangChain")
             st.markdown(
@@ -273,7 +293,6 @@ def main():
             [Streamlit](https://streamlit.io/) is an open-source app framework for Machine Learning and Data Science teams. Streamlit turns data scripts into shareable web apps in minutes. All in pure Python. No front-end experience required.
             """
             )
-            st.markdown(" ")
 
         with st.container():
             st.markdown("""---""")
@@ -339,9 +358,7 @@ def load_few_shot_chain(llm, db, examples):
         ),
     )
 
-    local_embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    local_embeddings = HuggingFaceEmbeddings(model_name=HUGGING_FACE_EMBEDDINGS_MODEL)
 
     example_selector = SemanticSimilarityExampleSelector.from_examples(
         examples,
@@ -362,7 +379,7 @@ def load_few_shot_chain(llm, db, examples):
         llm,
         db,
         prompt=few_shot_prompt,
-        use_query_checker=True,  # must be True for flan-t5 model
+        use_query_checker=False,  # must be False for OpenAI model
         verbose=True,
         return_intermediate_steps=True,
     )
@@ -376,19 +393,6 @@ def clear_text():
 def clear_session():
     for key in st.session_state.keys():
         del st.session_state[key]
-
-
-class ContentHandler(LLMContentHandler):
-    content_type = "application/json"
-    accepts = "application/json"
-
-    def transform_input(self, prompt: str, model_kwargs={}) -> bytes:
-        input_str = json.dumps({"text_inputs": prompt, **model_kwargs})
-        return input_str.encode("utf-8")
-
-    def transform_output(self, output: bytes) -> str:
-        response_json = json.loads(output.read().decode("utf-8"))
-        return response_json["generated_texts"][0]
 
 
 if __name__ == "__main__":

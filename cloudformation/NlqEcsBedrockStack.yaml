@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "SO9250 Guidance for Natural Language Queries of Relational Databases on AWS - ECS for Bedrock stack template."
+Parameters:
+  BedrockModelName:
+    Type: String
+    Default: "anthropic.claude-instant-v1"
+    Description: The Bedrock Model.
+  
+  # BedrockModelTemperature:
+  #   Type: Number
+  #   Default: 0.3
+  #   MinValue: 0
+  #   MaxValue: 1
+  #   Description: The Model's temperature.
+
+  # BedrockModelMaxTokensToSample:
+  #   Type: Number
+  #   Default: 2048
+  #   MinValue: 0
+  #   Description: The maximum tokens to sample.
+  
+  # BedrockModelTopK:
+  #   Type: Number
+  #   Default: 250
+  #   MinValue: 0
+  #   MaxValue: 500
+  #   Description: The Model's Top K.
+  
+  # BedrockModelTopP:
+  #   Type: Number
+  #   Default: 1
+  #   MinValue: 0
+  #   MaxValue: 1
+  #   Description: The Model's Top P.
+
+  # BedrockModelStopSequences:
+  #   Type: String
+  #   Default: '\"\\n\\nHuman:\"'
+  #   Description: The Model's stop sequences.
+
+  # BaseAvatarUrl:
+  #   Type: String
+  #   Default: "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
+  #   Description: The base URL of the avatar icons.
+
+  # HuggingFaceEmbeddingsModel:
+  #   Type: String
+  #   Default: "sentence-transformers/all-MiniLM-L6-v2"
+  #   Description: The HuggingFace embedding model to use (https://www.sbert.net/docs/pretrained_models.html).
+
+  ECRImageTag:
+    Type: String
+    Default: "1.0.5-bedrock"
+    Description: The name of the ECR Image tag to use with ECS/Fargate.
+
+  TaskName:
+    Type: String
+    Default: "nlq-genai-bedrock"
+    Description: The name of the ECS Task and Fargate Service.
+
+  ProjectTagValue:
+    Type: String
+    Default: "SO9250 Guidance for Natural Language Queries of Relational Databases on AWS"
+    Description: The Project Tag value applied to all resources.
+
+Resources:
+  ECSTaskDefinitionBedrock:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      ContainerDefinitions:
+        - Environment:
+            - Name: "REGION_NAME"
+              Value: !Ref AWS::Region
+            - Name: "MODEL_NAME"
+              Value: !Ref BedrockModelName
+            # - Name: "TEMPERATURE"
+            #   Value: !Ref BedrockModelTemperature
+            # - Name: "MAX_TOKENS_TO_SAMPLE"
+            #   Value: !Ref BedrockModelMaxTokensToSample
+            # - Name: "TOP_K"
+            #   Value: !Ref BedrockModelTopK
+            # - Name: "TOP_P"
+            #   Value: !Ref BedrockModelTopP
+            # - Name: "STOP_SEQUENCES"
+            #   Value: !Ref BedrockModelStopSequences
+            # - Name: "BASE_AVATAR_URL"
+            #   Value: !Ref BaseAvatarUrl
+            # - Name: "HUGGING_FACE_EMBEDDINGS_MODEL"
+            #   Value: !Ref HuggingFaceEmbeddingsModel
+          Essential: true
+          Image: !Sub "{{resolve:ssm:/nlq/ECRRepositoryUri}}:${ECRImageTag}"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-create-group: "true"
+              awslogs-group: "{{resolve:ssm:/nlq/ECSLogGroupName}}"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: "ecs"
+          Name: !Ref TaskName
+          PortMappings:
+            - ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+              HostPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+              Protocol: "tcp"
+      Family: !Ref TaskName
+      TaskRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
+      ExecutionRoleArn: "{{resolve:ssm:/nlq/EcsTaskExecutionRoleArn}}"
+      NetworkMode: "awsvpc"
+      RequiresCompatibilities:
+        - "FARGATE"
+      Cpu: "1024"
+      Memory: "3072"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
+
+  ECSServiceBedrock:
+    Type: "AWS::ECS::Service"
+    Properties:
+      ServiceName: !Ref TaskName
+      Cluster: "{{resolve:ssm:/nlq/ECSClusterArn}}"
+      LoadBalancers:
+        - TargetGroupArn: "{{resolve:ssm:/nlq/TargetGroupTargetGroupArn}}"
+          ContainerName: !Ref TaskName
+          ContainerPort: "{{resolve:ssm:/nlq/NLQAppPort}}"
+      DesiredCount: 1
+      LaunchType: "FARGATE"
+      PlatformVersion: "LATEST"
+      TaskDefinition: !Ref ECSTaskDefinitionBedrock
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: "ENABLED"
+          SecurityGroups:
+            - "{{resolve:ssm:/nlq/ECSSecurityGroupGroupId}}"
+            - "{{resolve:ssm:/nlq/VPCDefaultSecurityGroup}}"
+          Subnets:
+            - "{{resolve:ssm:/nlq/PublicSubnet1SubnetId}}"
+            - "{{resolve:ssm:/nlq/PublicSubnet2SubnetId}}"
+      HealthCheckGracePeriodSeconds: 60
+      SchedulingStrategy: "REPLICA"
+      DeploymentController:
+        Type: "ECS"
+      Tags:
+        - Key: "Project"
+          Value: !Ref ProjectTagValue
