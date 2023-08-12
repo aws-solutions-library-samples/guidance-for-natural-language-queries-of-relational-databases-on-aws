@@ -22,7 +22,7 @@ docker build -f Dockerfile_SageMaker -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
 # Option 2: Amazon Bedrock
-TAG="1.0.1-bedrock"
+TAG="1.0.0-bedrock"
 docker build -f Dockerfile_Bedrock -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
