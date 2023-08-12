@@ -202,15 +202,15 @@ Resources:
         - Key: "Project"
           Value: !Ref ProjectTagValue
 
-  # RDSMonitoringRole:
-  #   Type: "AWS::IAM::Role"
-  #   Properties:
-  #     Path: "/"
-  #     RoleName: "rds-monitoring-role"
-  #     AssumeRolePolicyDocument: '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"monitoring.rds.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
-  #     MaxSessionDuration: 3600
-  #     ManagedPolicyArns:
-  #       - "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+  RDSMonitoringRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      RoleName: "rds-monitoring-role"
+      AssumeRolePolicyDocument: '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"Service":"monitoring.rds.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 
   RDSDBInstance:
     Type: "AWS::RDS::DBInstance"
@@ -250,7 +250,7 @@ Resources:
       Tags:
         - Key: "Project"
           Value: !Ref ProjectTagValue
-    # DependsOn: RDSMonitoringRole
+    DependsOn: RDSMonitoringRole
 
   SecretsManagerSecret:
     Type: "AWS::SecretsManager::Secret"
