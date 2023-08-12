@@ -2,13 +2,9 @@
 
 This AWS Solution contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to ask questions of an Amazon RDS for PostgreSQL database. The solution has options to use Amazon SageMaker JumpStart Foundation Models, Amazon Bedrock, or third-party models provider's via their APIs. The demonstration's web-based application, running on Amazon ECS on AWS Fargate, uses a combination of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/) open-source embedding database, and [SentenceTransformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) to create sentence embeddings. The application accepts natural language questions from an end-users and returns natural language answers, along with the associated SQL query and Pandas DataFrame-compatible result set.
 
-#### NLQ Application Chatbot Tab
+#### NLQ Application Chatbot Preview
 
-![NLQ Application Preview 1](./pics/nlqapp_preview_1.png)
-
-#### NLQ Application Details Tab
-
-![NLQ Application Preview 2](./pics/nlqapp_preview_2.png)
+![NLQ Application Preview](./pics/nlq_animation.gif)
 
 ## Foundation Model Choice and Accuracy of NLQ
 
