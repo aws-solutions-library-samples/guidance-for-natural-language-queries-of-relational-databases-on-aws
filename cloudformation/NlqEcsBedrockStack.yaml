@@ -50,7 +50,7 @@ Parameters:
 
   ECRImageTag:
     Type: String
-    Default: "1.0.5-bedrock"
+    Default: "1.0.0-bedrock"
     Description: The name of the ECR Image tag to use with ECS/Fargate.
 
   TaskName:
