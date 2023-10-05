@@ -2,7 +2,7 @@
 awscli==1.29.25
 boto3==1.28.25
 chromadb==0.4.5
-langchain==0.0.262
+langchain==0.0.308
 langchain-experimental==0.0.8
 openai==0.27.8
 psycopg2-binary==2.9.7
