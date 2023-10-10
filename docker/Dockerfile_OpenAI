@@ -1,8 +1,8 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-07-17
+# Date: 2023-10-10
 
-FROM python:3.11.4-slim
+FROM python:3.11.6-slim
 
 LABEL name="nlq-genai" \
     version="1.0.0-oai" \
