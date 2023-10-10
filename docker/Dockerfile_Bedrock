@@ -1,8 +1,8 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and Amazon Bedrock.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-08-12
+# Date: 2023-10-10
 
-FROM python:3.11.4-slim
+FROM python:3.11.6-slim
 
 LABEL name="nlq-genai" \
     version="1.0.0-bedrock" \
@@ -16,12 +16,7 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
     # cache is useless in docker image, so disable to reduce image size
     PIP_NO_CACHE_DIR=1
 
-COPY requirements_bedrock.txt .
-# Bedrock requires specific AWS packages during preview/pre-GA period
-# see the Amazon Bedrock User Guide for access to the latest versions
-COPY awscli-1.29.21-py3-none-any.whl .
-COPY boto3-1.28.21-py3-none-any.whl .
-COPY botocore-1.31.21-py3-none-any.whl .
+COPY requirements.txt .
 
 RUN set -ex \
     # create a non-root user
@@ -32,12 +27,7 @@ RUN set -ex \
     && apt-get upgrade -y \
     && apt-get install gcc g++ git make -y \
     # install dependencies
-    && pip install -r requirements_bedrock.txt -U \
-    # for the CLI or SDK with Amazon Bedrock
-    && pip install botocore-1.31.21-py3-none-any.whl \
-    && pip install boto3-1.28.21-py3-none-any.whl \
-    # optional, for the CLI with Amazon Bedrock:
-    && pip install awscli-1.29.21-py3-none-any.whl \
+    && pip install -r requirements.txt -U \
     # clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
