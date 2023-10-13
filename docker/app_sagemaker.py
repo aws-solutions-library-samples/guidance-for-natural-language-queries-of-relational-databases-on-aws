@@ -16,7 +16,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain import FewShotPromptTemplate, PromptTemplate, SQLDatabase
+from langchain.sql_database import SQLDatabase
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.llms.sagemaker_endpoint import LLMContentHandler, SagemakerEndpoint
