@@ -3,7 +3,7 @@ awscli==1.29.62
 boto3==1.28.62
 botocore==1.31.62
 chromadb==0.4.14
-langchain==0.0.312
+langchain==0.0.317
 langchain-experimental==0.0.28
 openai==0.28.1
 psycopg2-binary==2.9.9
