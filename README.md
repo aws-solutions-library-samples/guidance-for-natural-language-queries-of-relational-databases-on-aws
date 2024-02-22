@@ -183,10 +183,10 @@ docker push $ECS_REPOSITORY:$TAG
 
 ### Step 5: Configure MoMA Database and Import Sample Data
 
-5a. Connect to the `moma` database using your preferred PostgreSQL tool. You may need to enable `Public access` for the
+5a. Connect to the `moma` database using your preferred PostgreSQL tool. You will need to enable `Public access` for the
 RDS instance temporarily depending on how you connect to the database.
 
-5c. Create the two MoMA collection tables into the `moma` database.
+5b. Create the two MoMA collection tables into the `moma` database.
 
 ```sql
 CREATE TABLE public.artists
