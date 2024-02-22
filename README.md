@@ -83,7 +83,7 @@ above prompts for specific models can help improve accuracy.
    inference, or request it using [Service Quotas](https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B) in the AWS Management Console (e.g., `ml.g5.24xlarge` for
    the `google/flan-t5-xxl-fp16`
    model. Refer to
-   the model's documentation for the choice of instance type.
+   the model's documentation for the choice of instance types.
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
 3. Deploy the `NlqMainStack` CloudFormation template. Please note, you will have needed to have used Amazon ECS at least
    one in your account, or the `AWSServiceRoleForECS` Service-Linked Role will not yet exist and the stack will fail.
