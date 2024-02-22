@@ -21,13 +21,11 @@ performing NLQ. In addition to model choice, NLQ accuracy also relies heavily on
 prompt, prompt template, labeled sample queries used for in-context learning (_aka few-shot prompting_), and the naming
 conventions used for your database schema (tables and columns).
 
-The NLQ Application was tested on a variety of open source and commercial FMs. As a baseline both Anthropic Claude v1.3
-and v2, and OpenAI's GPT-3 and GPT-4 series models were capable of accurately answering most or all sample questions
-included in this README file and the NLQ Application's web UI. Anthropic's Claude-series models,
-including `anthropic.claude-v1` and `anthropic.claude-v2`, as well as OpenAI's Generative Pre-trained Transformer GPT-3
-and GPT-4 series models, including `text-davinci-003` (Legacy), `gpt-3.5-turbo`, and `gpt-4`, all provide accurate
-responses to a wide range of complex natural language queries using an average amount of in-context learning and prompt
-engineering.
+The NLQ Application was tested on a variety of open source and commercial FMs. As a baseline OpenAI's Generative 
+Pre-trained Transformer GPT-3 and GPT-4 series models, including `gpt-3.5-turbo`, and 
+`gpt-4`, all provide accurate responses to a wide range of complex natural language queries using an average amount of 
+in-context learning and prompt engineering. In addition, the Amazon Titan Text G1 - Express, `amazon.titan-text-express-v1`, 
+was able to answer most of the Simple questions with some model specific prompt optimization.
 
 Open source NLQ-capable models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` (half-precision
 floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart Foundation
@@ -45,20 +43,20 @@ the `NlqSageMakerEndpointStack.yaml` CloudFormation template file. You will firs
 the `NlqSageMakerEndpointStack.yaml` file and update the deployed CloudFormation stack, `NlqSageMakerEndpointStack`.
 Additionally, you may need to make adjustments to the NLQ Application, the `app_sagemaker.py` file, modifying
 the `ContentHandler` Class to match the response payload of the chosen model. Then, rebuild the Amazon ECR Docker Image,
-incrementing the version, e.g., `nlq-genai-1.0.1-sm`, using the `Dockerfile_SageMaker` Dockerfile and push to the Amazon
+incrementing the version, e.g., `nlq-genai-2.0.1-sm`, using the `Dockerfile_SageMaker` Dockerfile and push to the Amazon
 ECR repository. Lastly, you will need to update the deployed ECS task and service, which are part of
 the `NlqEcsSageMakerStack` CloudFormation stack.
 
 ### Option 2: Switching to Amazon Bedrock
 
 Switching from the solution's default Amazon SageMaker JumpStart Foundation Model to Amazon Bedrock model's, such as
-Anthropic `anthropic.claude-v1` and `anthropic.claude-v2`, will provide superior results. Using Amazon Bedrock
+Amazon Titan Text G1 - Express (`amazon.titan-text-express-v1`), will provide better results than JumpStarts's `google/flan-t5-xxl-fp16`. Using Amazon Bedrock
 eliminates the need for the deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already
 been deployed, it can be deleted. Next, build the Amazon ECR Docker Image using the `Dockerfile_Bedrock` Dockerfile and
-push the resulting image, e.g., `nlq-genai-1.0.0-bedrock`, to the Amazon ECR repository. Finally, deploy
+push the resulting image, e.g., `nlq-genai-2.0.0-bedrock`, to the Amazon ECR repository. Finally, deploy
 the `NlqEcsBedrockStack.yaml` CloudFormation template file. This stack replaces the the `NlqEcsSageMakerStack`
-CloudFormation stack, designed for use JumpStart Foundation Models. The default model used for this option is Anthropic
-Claude Instant v1, `anthropic.claude-instant-v1`.
+CloudFormation stack, designed for use JumpStart Foundation Models. The default Amazon Bedrock model used for this option is 
+Amazon Titan Text G1 - Express (`amazon.titan-text-express-v1`).
 
 ### Option 3: Switching to a Third-party Model Provider's API
 
@@ -67,7 +65,7 @@ such as OpenAI, Cohere, and Anthropic is straightforward. To utilize OpenAI's mo
 OpenAI account and obtain your own personal API key. Using a third-party model via an API eliminates the need for the
 deployment of the `NlqSageMakerEndpointStack` CloudFormation stack. If the stack has already been deployed, it can be
 deleted. Next, build the Amazon ECR Docker Image using the `Dockerfile_OpenAI` Dockerfile and push the resulting image,
-e.g., `nlq-genai-1.0.0-oai`, to the Amazon ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation
+e.g., `nlq-genai-2.0.0-oai`, to the Amazon ECR repository. Finally, deploy the `NlqEcsOpenAIStack.yaml` CloudFormation
 template file. This stack replaces the the `NlqEcsSageMakerStack` CloudFormation stack, designed for use JumpStart
 Foundation Models.
 
@@ -121,8 +119,8 @@ the choice of model. Not all models are capable of NLQ, while others will not re
    one in your account, or the `AWSServiceRoleForECS` Service-Linked Role will not yet exist and the stack will fail.
    Check the `AWSServiceRoleForECS` Service-Linked Role before deploying the `NlqMainStack` stack. This role is
    auto-created the first time you create an ECS cluster in your account.
-4. If you use Option 1: SageMaker JumpStart FM Endpoint, build and push the `nlq-genai:1.0.0-sm` Docker image to the new
-   Amazon ECR repository. Alternately, build and push the `nlq-genai:1.0.0-bedrock` or `nlq-genai:1.0.0-oai` Docker
+4. If you use Option 1: SageMaker JumpStart FM Endpoint, build and push the `nlq-genai:2.0.0-sm` Docker image to the new
+   Amazon ECR repository. Alternately, build and push the `nlq-genai:2.0.0-bedrock` or `nlq-genai:2.0.0-oai` Docker
    image for use with Option 2: Bedrock or Option 3: OpenAI API.
 5. Import the included sample data into the Amazon RDS MoMA database.
 6. Add the `nlqapp` user to the MoMA database.
@@ -134,14 +132,9 @@ the choice of model. Not all models are capable of NLQ, while others will not re
 
 ### Step 2: Create AWS Secret Manager Secrets
 
-Make sure you update the secret values before continuing.
+Make sure you update the secret values below before continuing. This step will create secrets for the credentials for the NLQ application. Optionally, this step will create a secret to store your OpenAI API key. Master User credentials for the RDS instance are set automatically and stored in AWS Secret Manager as part of the `NlqMainStack` CloudFormation template.
 
 ```sh
-aws secretsmanager create-secret \
-    --name /nlq/MasterUsername \
-    --description "Master username for RDS instance." \
-    --secret-string "<your_master_username>"
-
 aws secretsmanager create-secret \
     --name /nlq/NLQAppUsername \
     --description "NLQ Application username for MoMA database." \
@@ -189,7 +182,7 @@ aws ecr get-login-password --region us-east-1 | \
 Option 1: SageMaker JumpStart FM Endpoint
 
 ```sh
-TAG="1.0.0-sm"
+TAG="2.0.0-sm"
 docker build -f Dockerfile_SageMaker -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
@@ -197,7 +190,7 @@ docker push $ECS_REPOSITORY:$TAG
 Option 2: Amazon Bedrock
 
 ```sh
-TAG="1.0.0-bedrock"
+TAG="2.0.0-bedrock"
 docker build -f Dockerfile_Bedrock -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```
@@ -205,7 +198,7 @@ docker push $ECS_REPOSITORY:$TAG
 Option 3: OpenAI API
 
 ```sh
-TAG="1.0.0-oai"
+TAG="2.0.0-oai"
 docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 ```

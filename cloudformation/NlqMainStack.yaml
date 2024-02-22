@@ -30,6 +30,11 @@ Parameters:
     Default: 5432
     Description: The port RDS is listening on.
 
+  RDSEngineVersion:
+    Type: String
+    Default: "16.1"
+    Description: The RDS PostgreSQL engine version.
+
   ALBPort:
     Type: Number
     Default: 80
@@ -226,7 +231,7 @@ Resources:
       BackupRetentionPeriod: 7
       PreferredMaintenanceWindow: "fri:04:30-fri:05:00"
       MultiAZ: true
-      EngineVersion: "15.3"
+      EngineVersion: !Ref RDSEngineVersion
       AutoMinorVersionUpgrade: true
       LicenseModel: "postgresql-license"
       PubliclyAccessible: false

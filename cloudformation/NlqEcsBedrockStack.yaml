@@ -3,7 +3,7 @@ Description: "SO9250 Guidance for Natural Language Queries of Relational Databas
 Parameters:
   BedrockModelName:
     Type: String
-    Default: "anthropic.claude-instant-v1"
+    Default: "amazon.titan-text-express-v1"
     Description: The Bedrock Model.
   
   # BedrockModelTemperature:
@@ -50,7 +50,7 @@ Parameters:
 
   ECRImageTag:
     Type: String
-    Default: "1.0.0-bedrock"
+    Default: "2.0.0-bedrock"
     Description: The name of the ECR Image tag to use with ECS/Fargate.
 
   TaskName:

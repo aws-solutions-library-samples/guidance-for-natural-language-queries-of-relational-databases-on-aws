@@ -1,35 +1,34 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and OpenAI's LLM models via their API.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-08-05
+# Date: 2024-02-21
 # Application expects the following environment variables (adjust for your environment):
-# export OPENAI_API_KEY="sk-<your_api_key>""
-# export REGION_NAME="us-east-1"
-# export MODEL_NAME="gpt-3.5-turbo"
+# export OPENAI_API_KEY="sk-<your_api_key>"
 # Usage: streamlit run app_openai.py --server.runOnSave true
 
 import ast
+import boto3
 import json
 import logging
 import os
-
-import boto3
 import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain.sql_database import SQLDatabase
-from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
-from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.prompts.example_selector.semantic_similarity import (
     SemanticSimilarityExampleSelector,
 )
-from langchain.vectorstores import Chroma
+from langchain.sql_database import SQLDatabase
+from langchain_community.vectorstores import Chroma
 from langchain_experimental.sql import SQLDatabaseChain
+from langchain_openai import ChatOpenAI
 
+# ***** CONFIGURABLE PARAMETERS *****
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4")
+TEMPERATURE = os.environ.get("TEMPERATURE", 0.3)
 BASE_AVATAR_URL = (
     "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
 )
@@ -60,7 +59,7 @@ def main():
 
     llm = ChatOpenAI(
         model_name=MODEL_NAME,
-        temperature=0.0,
+        temperature=TEMPERATURE,
         verbose=True,
     )
 
@@ -85,10 +84,13 @@ def main():
         st.session_state["past"] = []
 
     if "query" not in st.session_state:
-        st.session_state["query"] = []
+        st.session_state["query"] = ""
 
     if "query_text" not in st.session_state:
-        st.session_state["query_text"] = []
+        st.session_state["query_text"] = ""
+
+    if "query_error" not in st.session_state:
+        st.session_state["query_error"] = ""
 
     tab1, tab2, tab3 = st.tabs(["Chatbot", "Details", "Technologies"])
 
@@ -154,33 +156,34 @@ def main():
                         except Exception as exc:
                             st.session_state.generated.append(NO_ANSWER_MSG)
                             logging.error(exc)
+                            st.session_state["query_error"] = exc
 
                 # https://discuss.streamlit.io/t/streamlit-chat-avatars-not-working-on-cloud/46713/2
                 if st.session_state["generated"]:
                     with col1:
                         for i in range(len(st.session_state["generated"]) - 1, -1, -1):
                             if (i >= 0) and (
-                                st.session_state["generated"][i] != NO_ANSWER_MSG
+                                    st.session_state["generated"][i] != NO_ANSWER_MSG
                             ):
                                 with st.chat_message(
-                                    "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
+                                        "assistant",
+                                        avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
-                                    "user",
-                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
+                                        "user",
+                                        avatar=f"{BASE_AVATAR_URL}/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
-                                    "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
+                                        "assistant",
+                                        avatar=f"{BASE_AVATAR_URL}/bot-64px.png",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
-                                    "user",
-                                    avatar=f"{BASE_AVATAR_URL}/human-64px.png",
+                                        "user",
+                                        avatar=f"{BASE_AVATAR_URL}/human-64px.png",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:
@@ -194,7 +197,7 @@ def main():
 
             position = len(st.session_state["generated"]) - 1
             if (position >= 0) and (
-                st.session_state["generated"][position] != NO_ANSWER_MSG
+                    st.session_state["generated"][position] != NO_ANSWER_MSG
             ):
                 st.markdown("Question:")
                 st.code(
@@ -218,6 +221,7 @@ def main():
                     st.session_state["generated"][position]["result"], language="text"
                 )
 
+
                 data = ast.literal_eval(
                     st.session_state["generated"][position]["intermediate_steps"][3]
                 )
@@ -226,6 +230,11 @@ def main():
                     st.markdown("Pandas DataFrame:")
                     df = pd.DataFrame(data)
                     df
+
+            st.markdown("Query Error:")
+            st.code(
+                st.session_state["query_error"], language="text"
+            )
     with tab3:
         with st.container():
             st.markdown("### Technologies")
@@ -389,6 +398,7 @@ def load_few_shot_chain(llm, db, examples):
 def clear_text():
     st.session_state["query"] = st.session_state["query_text"]
     st.session_state["query_text"] = ""
+    st.session_state["query_error"] = ""
 
 
 def clear_session():

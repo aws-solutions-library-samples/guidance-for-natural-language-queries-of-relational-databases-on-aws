@@ -5,7 +5,7 @@
 # 2/ Amazon Bedrock
 # 3/ OpenAI's LLM models via their API
 # Author: Gary A. Stafford
-# Date: 2023-07-12
+# Date: 2024-02-21
 # run: chmod a+rx build.sh
 # sh ./build.sh
 
@@ -17,17 +17,17 @@ aws ecr get-login-password --region us-east-1 |
 	docker login --username AWS --password-stdin $ECS_REPOSITORY
 
 # Option 1: SageMaker JumpStart FM Endpoint
-TAG="1.0.0-sm"
+TAG="2.0.0-sm"
 docker build -f Dockerfile_SageMaker -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
 # Option 2: Amazon Bedrock
-TAG="1.0.0-bedrock"
+TAG="2.0.0-bedrock"
 docker build -f Dockerfile_Bedrock -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
 # Option 3: OpenAI API
-TAG="1.0.0-oai"
+TAG="2.0.0-oai"
 docker build -f Dockerfile_OpenAI -t $ECS_REPOSITORY:$TAG .
 docker push $ECS_REPOSITORY:$TAG
 
