@@ -34,8 +34,8 @@ Open source models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` (
 floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their
 capabilities for NLQ are limited compared to newer open-source and commercial LLMs. The
 demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient
-in-context learning, but often failed during testing to return an
-answer, provide correct answers, or frequently experience SageMaker model endpoint timeouts due to
+in-context learning. However, it often failed during testing to return an
+answer or provide correct answers, and it frequently caused SageMaker model endpoint timeouts due to
 resource exhaustion when faced with moderate to complex queries.
 
 ## Sample Dataset
