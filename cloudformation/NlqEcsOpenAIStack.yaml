@@ -3,12 +3,12 @@ Description: "SO9250 Guidance for Natural Language Queries of Relational Databas
 Parameters:
   OpenAIModelName:
     Type: String
-    Default: "gpt-3.5-turbo"
+    Default: "gpt-4"
     Description: The OpenAI LLM to call via their API.
 
   ECRImageTag:
     Type: String
-    Default: "1.0.0-oai"
+    Default: "2.0.0-oai"
     Description: The name of the ECR Image tag to use with ECS/Fargate.
 
   TaskName:
