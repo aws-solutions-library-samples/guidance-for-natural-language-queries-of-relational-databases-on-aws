@@ -1,37 +1,33 @@
 # Natural Language Query (NLQ) demo using Amazon RDS for PostgreSQL and Amazon Bedrock.
 # Author: Gary A. Stafford (garystaf@amazon.com)
-# Date: 2023-08-12
+# Date: 2024-02-21
 # Usage: streamlit run app_bedrock.py --server.runOnSave true
 
 import ast
+import boto3
 import json
 import logging
 import os
-
-import boto3
 import pandas as pd
 import streamlit as st
 import yaml
 from botocore.exceptions import ClientError
-from langchain.sql_database import SQLDatabase
-from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.chains.sql_database.prompt import PROMPT_SUFFIX, _postgres_prompt
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.llms import Bedrock
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain.prompts.example_selector.semantic_similarity import (
     SemanticSimilarityExampleSelector,
 )
-from langchain.vectorstores import Chroma
+from langchain.sql_database import SQLDatabase
+from langchain_community.llms import Bedrock
+from langchain_community.vectorstores import Chroma
 from langchain_experimental.sql import SQLDatabaseChain
 
 # ***** CONFIGURABLE PARAMETERS *****
 REGION_NAME = os.environ.get("REGION_NAME", "us-east-1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "anthropic.claude-instant-v1")
+MODEL_NAME = os.environ.get("MODEL_NAME", "amazon.titan-text-express-v1")
 TEMPERATURE = os.environ.get("TEMPERATURE", 0.3)
-MAX_TOKENS_TO_SAMPLE = os.environ.get("MAX_TOKENS_TO_SAMPLE", 4096)
-TOP_K = os.environ.get("TOP_K", 250)
 TOP_P = os.environ.get("TOP_P", 1)
-STOP_SEQUENCES = os.environ.get("STOP_SEQUENCES", ["\n\nHuman"])
 BASE_AVATAR_URL = (
     "https://raw.githubusercontent.com/garystafford-aws/static-assets/main/static"
 )
@@ -40,7 +36,6 @@ USER_ICON = os.environ.get("USER_ICON", "human-64px.png")
 HUGGING_FACE_EMBEDDINGS_MODEL = os.environ.get(
     "HUGGING_FACE_EMBEDDINGS_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
-# ******************************************************************
 
 
 def main():
@@ -66,11 +61,8 @@ def main():
     NO_ANSWER_MSG = "Sorry, I was unable to answer your question."
 
     parameters = {
-        "max_tokens_to_sample": MAX_TOKENS_TO_SAMPLE,
         "temperature": TEMPERATURE,
-        "top_k": TOP_K,
-        "top_p": TOP_P,
-        "stop_sequences": STOP_SEQUENCES,
+        "topP": TOP_P,
     }
 
     llm = Bedrock(
@@ -101,10 +93,13 @@ def main():
         st.session_state["past"] = []
 
     if "query" not in st.session_state:
-        st.session_state["query"] = []
+        st.session_state["query"] = ""
 
     if "query_text" not in st.session_state:
-        st.session_state["query_text"] = []
+        st.session_state["query_text"] = ""
+
+    if "query_error" not in st.session_state:
+        st.session_state["query_error"] = ""
 
     tab1, tab2, tab3 = st.tabs(["Chatbot", "Details", "Technologies"])
 
@@ -124,10 +119,10 @@ def main():
                         - Simple
                             - How many artists are there in the collection?
                             - How many pieces of artwork are there?
-                            - How many artists are there whose nationality is Italian?
-                            - How many artworks are by the artist Claude Monet?
+                            - How many artists are there whose nationality is 'Italian'?
+                            - How many artworks are by the artist 'Claude Monet'?
                             - How many artworks are classified as paintings?
-                            - How many artworks were created by Spanish artists?
+                            - How many artworks were created by 'Spanish' artists?
                             - How many artist names start with the letter 'M'?
                         - Moderate
                             - How many artists are deceased as a percentage of all artists?
@@ -170,33 +165,34 @@ def main():
                         except Exception as exc:
                             st.session_state.generated.append(NO_ANSWER_MSG)
                             logging.error(exc)
+                            st.session_state["query_error"] = exc
 
                 # https://discuss.streamlit.io/t/streamlit-chat-avatars-not-working-on-cloud/46713/2
                 if st.session_state["generated"]:
                     with col1:
                         for i in range(len(st.session_state["generated"]) - 1, -1, -1):
                             if (i >= 0) and (
-                                st.session_state["generated"][i] != NO_ANSWER_MSG
+                                    st.session_state["generated"][i] != NO_ANSWER_MSG
                             ):
                                 with st.chat_message(
-                                    "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
+                                        "assistant",
+                                        avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
                                 ):
                                     st.write(st.session_state["generated"][i]["result"])
                                 with st.chat_message(
-                                    "user",
-                                    avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
+                                        "user",
+                                        avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
                                 ):
                                     st.write(st.session_state["past"][i])
                             else:
                                 with st.chat_message(
-                                    "assistant",
-                                    avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
+                                        "assistant",
+                                        avatar=f"{BASE_AVATAR_URL}/{ASSISTANT_ICON}",
                                 ):
                                     st.write(NO_ANSWER_MSG)
                                 with st.chat_message(
-                                    "user",
-                                    avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
+                                        "user",
+                                        avatar=f"{BASE_AVATAR_URL}/{USER_ICON}",
                                 ):
                                     st.write(st.session_state["past"][i])
         with col2:
@@ -210,7 +206,7 @@ def main():
 
             position = len(st.session_state["generated"]) - 1
             if (position >= 0) and (
-                st.session_state["generated"][position] != NO_ANSWER_MSG
+                    st.session_state["generated"][position] != NO_ANSWER_MSG
             ):
                 st.markdown("Question:")
                 st.code(
@@ -242,6 +238,10 @@ def main():
                     st.markdown("Pandas DataFrame:")
                     df = pd.DataFrame(data)
                     df
+            st.markdown("Query Error:")
+            st.code(
+                st.session_state["query_error"], language="text"
+            )
     with tab3:
         with st.container():
             st.markdown("### Technologies")
@@ -371,7 +371,7 @@ def load_few_shot_chain(llm, db, examples):
     few_shot_prompt = FewShotPromptTemplate(
         example_selector=example_selector,
         example_prompt=example_prompt,
-        prefix=_postgres_prompt + "Here are some examples:",
+        prefix=_postgres_prompt + " Here are some examples:",
         suffix=PROMPT_SUFFIX,
         input_variables=["table_info", "input", "top_k"],
     )
@@ -389,6 +389,7 @@ def load_few_shot_chain(llm, db, examples):
 def clear_text():
     st.session_state["query"] = st.session_state["query_text"]
     st.session_state["query_text"] = ""
+    st.session_state["query_error"] = ""
 
 
 def clear_session():
