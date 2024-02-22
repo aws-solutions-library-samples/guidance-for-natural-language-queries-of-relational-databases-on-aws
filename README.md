@@ -4,8 +4,7 @@ This [AWS Solution](https://aws.amazon.com/solutions/guidance/natural-language-q
 ask questions of an Amazon RDS for PostgreSQL database. This solution offers three architectural options for Foundation
 Models: 1. Amazon SageMaker JumpStart, 2. Amazon Bedrock, and 3. OpenAI API. The demonstration's web-based
 application, running on Amazon ECS on AWS Fargate, uses a combination
-of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/)
-open-source embedding database, and [HuggingFace SentenceTransformers](https://huggingface.co/sentence-transformers).
+of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/), and [HuggingFace SentenceTransformers](https://huggingface.co/sentence-transformers).
 The application accepts natural language questions from end-users and returns natural
 language answers, along with the associated SQL query and Pandas DataFrame-compatible result set.
 
