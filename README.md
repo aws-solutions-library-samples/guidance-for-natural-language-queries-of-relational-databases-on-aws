@@ -1,10 +1,12 @@
 ## Guidance for Natural Language Queries of Relational Databases on AWS
 
-This [AWS Solution](https://aws.amazon.com/solutions/guidance/natural-language-queries-of-relational-databases-on-aws/#) contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to
+This [AWS Solution](https://aws.amazon.com/solutions/guidance/natural-language-queries-of-relational-databases-on-aws/#)
+contains a demonstration of Generative AI, specifically, the use of Natural Language Query (NLQ) to
 ask questions of an Amazon RDS for PostgreSQL database. This solution offers three architectural options for Foundation
 Models: 1. Amazon SageMaker JumpStart, 2. Amazon Bedrock, and 3. OpenAI API. The demonstration's web-based
 application, running on Amazon ECS on AWS Fargate, uses a combination
-of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/), and [HuggingFace SentenceTransformers](https://huggingface.co/sentence-transformers).
+of [LangChain](https://python.langchain.com/docs/get_started/introduction.html), [Streamlit](https://streamlit.io/), [Chroma](https://www.trychroma.com/),
+and [HuggingFace SentenceTransformers](https://huggingface.co/sentence-transformers).
 The application accepts natural language questions from end-users and returns natural
 language answers, along with the associated SQL query and Pandas DataFrame-compatible result set.
 
@@ -31,8 +33,9 @@ optimization. However, this model was not able to respond to more complex querie
 optimization could improve model accuracy.
 
 Open source models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` (half-precision
-floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their
-capabilities for NLQ are limited compared to newer open-source and commercial LLMs. The
+floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart. While
+the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their
+capabilities for NLQ are limited compared to newer open-source and commercial models. The
 demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient
 in-context learning. However, it often failed during testing to return an
 answer or provide correct answers, and it frequently caused SageMaker model endpoint timeouts due to
@@ -79,10 +82,12 @@ above prompts for specific models can help improve accuracy.
 
 ## Deployment Instructions (see details below)
 
-1. Optionally, for Option 1: Amazon SageMaker JumpStart, ensure that you have the required EC2 instance for the endpoint
-   inference, or request it using [Service Quotas](https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B) in the AWS Management Console (e.g., `ml.g5.24xlarge` for
+1. For Option 1: Amazon SageMaker JumpStart, ensure that you have the required EC2 instance for the endpoint
+   inference, or request it
+   using [Service Quotas](https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B)
+   in the AWS Management Console (e.g., `ml.g5.24xlarge` for
    the `google/flan-t5-xxl-fp16`
-   model. Refer to
+   model). Refer to
    the model's documentation for the choice of instance types.
 2. Create the required secrets in AWS Secret Manager using the AWS CLI.
 3. Deploy the `NlqMainStack` CloudFormation template. Please note, you will have needed to have used Amazon ECS at least
@@ -98,6 +103,14 @@ above prompts for specific models can help improve accuracy.
 8. For Option 1: Amazon SageMaker JumpStart, deploy the `NlqEcsSageMakerStack` CloudFormation template.
    Alternately, deploy the `NlqEcsBedrockStack` CloudFormation template for use with Option 2: Amazon Bedrock or
    the `NlqEcsOpenAIStack` template for use with Option 3: OpenAI API.
+
+### Optional Step 1: Amazon SageMaker JumpStart Inference Instance
+
+For Option 1: Amazon SageMaker JumpStart, ensure that you have the required EC2 instance for the Amazon
+SageMaker JumpStart endpoint inference or request it
+using [Service Quotas](https://us-east-1.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-6821867B)
+in the AWS Management Console (e.g., `ml.g5.24xlarge` for the `google/flan-t5-xxl-fp16` model). Refer to the model's
+documentation for the choice of instance types.
 
 ### Step 2: Create AWS Secret Manager Secrets
 
