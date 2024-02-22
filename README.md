@@ -31,8 +31,7 @@ optimization. However, this model was not able to respond to more complex querie
 optimization could improve model accuracy.
 
 Open source models, such as `google/flan-t5-xxl` and `google/flan-t5-xxl-fp16` (half-precision
-floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart Foundation
-Models. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their
+floating-point format (FP16) version of the full model), are available through Amazon SageMaker JumpStart. While the `google/flan-t5` series of models are a popular choice for building Generative AI applications, their
 capabilities for NLQ are limited compared to newer open-source and commercial LLMs. The
 demonstration's `google/flan-t5-xxl-fp16` is capable of answering basic natural language queries with sufficient
 in-context learning, but often failed during testing to return an
