@@ -248,8 +248,8 @@ Resources:
       VPCSecurityGroups:
         - !GetAtt RDSSecurityGroup.GroupId
       MaxAllocatedStorage: 1000
-      DBParameterGroupName: "default.postgres15"
-      OptionGroupName: "default:postgres-15"
+      DBParameterGroupName: "default.postgres16"
+      OptionGroupName: "default:postgres-16"
       MonitoringRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role"
       CACertificateIdentifier: "rds-ca-2019"
       Tags:
