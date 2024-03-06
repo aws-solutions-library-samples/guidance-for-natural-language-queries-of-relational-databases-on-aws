@@ -3,7 +3,7 @@ awscli==1.32.46
 boto3==1.34.46
 botocore==1.34.46
 chromadb==0.4.22
-langchain==0.1.8
+langchain==0.1.11
 langchain-community==0.0.21
 langchain-openai==0.0.6
 langchain-experimental==0.0.52
